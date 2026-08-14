@@ -55,7 +55,7 @@ if [ -f "/home/workspace/scenario-config/enhanced-scenario-config.json" ]; then
     echo_with_timestamp "Enhanced scenario configuration loaded successfully"
     
     # Extract repository URL to determine folder name
-    REPOSITORY=$(echo "$SCENARIO_CONFIG" | jq -r '.repository // "https://github.com/simonegaiera/mongodb-airbnb-workshop"')
+    REPOSITORY=$(echo "$SCENARIO_CONFIG" | jq -r '.repository // "https://github.com/mongodb-sc/mongodb-ai-arena"')
     REPO_NAME=$(get_repo_name "$REPOSITORY")
 else
     echo_with_timestamp "Warning: Enhanced scenario config file not found at /home/workspace/scenario-config/enhanced-scenario-config.json"

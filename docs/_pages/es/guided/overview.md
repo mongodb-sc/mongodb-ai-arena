@@ -12,7 +12,7 @@ Tu empresa acaba de dar un paso audaz: entrar en el acelerado mundo de los alqui
 
 Aquí comienza **MongoDB AI Arena**. Piénsalo como el arranque de tu empresa—un viaje práctico donde aprenderás los fundamentos de MongoDB construyendo la columna vertebral de tu nueva aplicación de alquiler. Cada desafío está inspirado en escenarios del mundo real que enfrentarás a medida que llevas tu producto a la vida. Al final, tendrás las habilidades para hacer felices a tus usuarios—y a tu empresa.
 
-¿Listo para arremangarte? Consulta nuestro [repositorio de GitHub](https://github.com/simonegaiera/mongodb-airbnb-workshop) ¡y comencemos!
+¿Listo para arremangarte? Consulta nuestro [repositorio de GitHub](https://github.com/mongodb-sc/mongodb-ai-arena) ¡y comencemos!
 
 ---
 

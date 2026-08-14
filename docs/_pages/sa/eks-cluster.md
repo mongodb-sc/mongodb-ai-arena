@@ -52,7 +52,7 @@ aws:
 
 ```yaml
 scenario:
-  repository: "https://github.com/simonegaiera/mongodb-airbnb-workshop"
+  repository: "https://github.com/mongodb-sc/mongodb-ai-arena"
   branch: "main"
   
   database:

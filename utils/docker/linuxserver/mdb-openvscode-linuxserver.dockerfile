@@ -132,7 +132,7 @@ RUN chown -R 1000:1000 /config/Cline
 # at /home/workspace. user_operations.sh seeds the workspace from here on
 # first start (avoids full clone), then git pulls only the delta.
 # =============================================================================
-ARG REPO_URL=https://github.com/simonegaiera/mongodb-airbnb-workshop
+ARG REPO_URL=https://github.com/mongodb-sc/mongodb-ai-arena
 ARG REPO_BRANCH=main
 
 # MongoDB agent skills for Cline (.cline/skills seeded to workspace at runtime)

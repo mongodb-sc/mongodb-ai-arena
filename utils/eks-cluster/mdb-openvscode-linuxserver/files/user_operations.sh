@@ -44,7 +44,7 @@ if [ -f "/home/workspace/scenario-config/enhanced-scenario-config.json" ]; then
     ATLAS_SRV=$(echo "$SCENARIO_CONFIG" | jq -r '.atlas_standard_srv // ""')
     ATLAS_PWD=$(echo "$SCENARIO_CONFIG" | jq -r '.atlas_user_password // ""')
     BACKEND_TYPE=$(echo "$SCENARIO_CONFIG" | jq -r '.backend // ""')
-    REPOSITORY=$(echo "$SCENARIO_CONFIG" | jq -r '.repository // "https://github.com/simonegaiera/mongodb-airbnb-workshop"')
+    REPOSITORY=$(echo "$SCENARIO_CONFIG" | jq -r '.repository // "https://github.com/mongodb-sc/mongodb-ai-arena"')
     BRANCH=$(echo "$SCENARIO_CONFIG" | jq -r '.branch // "main"')
     FRONTEND_TYPE=$(echo "$SCENARIO_CONFIG" | jq -r '.frontend // ""')
     PRECONFIGURE_MDB_CONNECTION=$(echo "$SCENARIO_CONFIG" | jq -r '.vscode.preconfigure_mongodb_connection // false')
@@ -65,7 +65,7 @@ if [ -f "/home/workspace/scenario-config/enhanced-scenario-config.json" ]; then
 else
     echo_with_timestamp "Warning: Enhanced scenario config file not found at /home/workspace/scenario-config/enhanced-scenario-config.json"
     # Set defaults if config file not found
-    REPOSITORY="https://github.com/simonegaiera/mongodb-airbnb-workshop"
+    REPOSITORY="https://github.com/mongodb-sc/mongodb-ai-arena"
     BRANCH="main"
     FRONTEND_TYPE="app"
     PRECONFIGURE_MDB_CONNECTION="false"

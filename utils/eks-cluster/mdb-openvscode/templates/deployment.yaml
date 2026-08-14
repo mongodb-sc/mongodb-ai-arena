@@ -1,0 +1,203 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mdb-openvscode.fullname" . }}
+  labels:
+    {{- include "mdb-openvscode.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mdb-openvscode.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mdb-openvscode.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mdb-openvscode.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: workspace-setup
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: true
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "bash"
+            - "-c"
+            - |
+              # Create persistent log file with timestamp
+              INIT_LOG="/home/workspace/init-$(date +%Y%m%d-%H%M%S).log"
+              {
+                echo "Starting workspace initialization at $(date)"
+                echo "Init container starting..."
+                echo "Available files in /home/workspace/utils:"
+                ls -la /home/workspace/utils/
+                echo "Copying files..."
+                cp /home/workspace/utils/startup.sh /tmp/startup.sh
+                cp /home/workspace/utils/user_operations.sh /tmp/user_operations.sh
+                cp /home/workspace/utils/openvscode_extensions.sh /tmp/openvscode_extensions.sh
+                cp /home/workspace/utils/setup_lab_exercises.sh /tmp/setup_lab_exercises.sh
+                echo "Files copied successfully"
+                echo "Setting permissions..."
+                chmod +x /tmp/startup.sh
+                chmod +x /tmp/user_operations.sh
+                chmod +x /tmp/openvscode_extensions.sh
+                chmod +x /tmp/setup_lab_exercises.sh
+                echo "Permissions set successfully"
+                echo "Running openvscode_extensions.sh..."
+                /tmp/openvscode_extensions.sh
+                echo "openvscode_extensions.sh completed with exit code: $?"
+                echo "Running startup.sh..."
+                /tmp/startup.sh
+                echo "startup.sh completed with exit code: $?"
+                echo "Workspace initialization completed at $(date)"
+              } >> "$INIT_LOG" 2>&1 || {
+                echo "Workspace initialization FAILED at $(date) with exit code: $?" >> "$INIT_LOG"
+                exit 1
+              }
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            {{- range .Values.service.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .targetPort }}
+            {{- end }}
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- if .Values.resultsProcessor.enabled }}
+        - name: results-processor
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.resultsProcessor.image.repository }}:{{ .Values.resultsProcessor.image.tag }}"
+          imagePullPolicy: {{ .Values.resultsProcessor.image.pullPolicy }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              set -e
+              
+              # Create Maven home directory with proper permissions
+              export MAVEN_OPTS="-Dmaven.repo.local=/tmp/.m2/repository"
+              mkdir -p /tmp/.m2/repository
+              
+              # Navigate to results-processor directory
+              cd ${SCENARIO_PATH}
+              
+              # Check if source code exists
+              if [ ! -f "pom.xml" ]; then
+                echo "ERROR: pom.xml not found in ${SCENARIO_PATH}"
+                echo "Available files:"
+                ls -la ${SCENARIO_PATH} || echo "Directory not found"
+                exit 1
+              fi
+              
+              # Force clean compilation on every startup
+              echo "=== FORCING FRESH COMPILATION ON CONTAINER START ==="
+              echo "Container start time: $(date)"
+              echo "Removing any existing target directory..."
+              rm -rf target/
+              
+              # Clean Maven cache to ensure fresh build
+              echo "Cleaning Maven cache..."
+              rm -rf /tmp/.m2/repository/com/mongodb/workshop/results-processor
+              
+              echo "Starting fresh compilation..."
+              mvn clean compile package -q -DskipTests=true -U
+              
+              # Verify compilation success
+              if [ ! -f "target/results-processor-1.0.0.jar" ]; then
+                echo "ERROR: Compiled JAR not found after fresh compilation"
+                echo "Available files in target:"
+                ls -la target/ || echo "Target directory not found"
+                exit 1
+              fi
+              
+              # Display JAR info for verification
+              echo "=== COMPILATION SUCCESSFUL ==="
+              echo "JAR file details:"
+              ls -la target/results-processor-1.0.0.jar
+              echo "JAR creation time: $(stat -c %y target/results-processor-1.0.0.jar 2>/dev/null || stat -f %Sm target/results-processor-1.0.0.jar)"
+              
+              echo "Starting Results Processor application..."
+              # Run the processor once - it will handle signal-based triggering internally
+              java -jar target/results-processor-1.0.0.jar
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}

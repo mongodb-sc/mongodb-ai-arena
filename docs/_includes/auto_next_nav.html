@@ -1,0 +1,36 @@
+<!-- Auto Next Navigation - Add to footer.html or layout -->
+{% comment %}
+This include can be added to _includes/footer.html or any layout to automatically
+show next page navigation on all pages that are part of the workshop navigation.
+{% endcomment %}
+
+{% assign current_url = page.permalink | default: page.url %}
+{% assign is_workshop_page = false %}
+
+{% comment %}Select the navigation key based on page language{% endcomment %}
+{% assign page_lang = page.lang | default: "en" %}
+{% if page_lang == "es" %}
+  {% assign nav_key = "docs_es" %}
+{% elsif page_lang == "pt" %}
+  {% assign nav_key = "docs_pt" %}
+{% else %}
+  {% assign nav_key = "docs" %}
+{% endif %}
+
+{% comment %}Check if current page is in the workshop navigation{% endcomment %}
+{% for section in site.data.navigation[nav_key] %}
+  {% for child in section.children %}
+    {% if child.url == current_url %}
+      {% assign is_workshop_page = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+  {% if is_workshop_page %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}Only show navigation for workshop pages{% endcomment %}
+{% if is_workshop_page %}
+  {% include simple_next_nav.html %}
+{% endif %}

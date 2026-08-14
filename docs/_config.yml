@@ -1,0 +1,53 @@
+title: MongoDB AI Arena
+title_separator: ""
+subtitle: ""
+description: Hands-on experience with MongoDB
+baseurl: ""
+url: "https://mongoarena.com"
+remote_theme: mmistakes/minimal-mistakes@master
+logo: "/assets/images/logo.png"
+breadcrumbs: true
+default_lang: en
+languages: [en, es, pt]
+plugins:
+  - jekyll-include-cache
+  - jekyll-sitemap
+  - jekyll-remote-theme
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: single
+      read_time: false
+      comments: false
+      share: false
+      related: false
+      lang: en
+      sidebar:
+        nav: "docs"
+  - scope:
+      path: "_pages/es"
+      type: pages
+    values:
+      layout: single
+      read_time: false
+      comments: false
+      share: false
+      related: false
+      lang: es
+      sidebar:
+        nav: "docs_es"
+  - scope:
+      path: "_pages/pt"
+      type: pages
+    values:
+      layout: single
+      read_time: false
+      comments: false
+      share: false
+      related: false
+      lang: pt
+      sidebar:
+        nav: "docs_pt"
+include: ["_pages"]

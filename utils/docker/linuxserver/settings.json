@@ -1,0 +1,40 @@
+{
+    // Appearance
+    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.startupEditor": "none",
+    "editor.minimap.enabled": false,
+
+    // Workshop UX — skip trust prompt, suppress confirmations
+    "security.workspace.trust.enabled": false,
+    "mdb.confirmRunAll": false,
+    "telemetry.telemetryLevel": "off",
+
+    // Suppress startup walkthrough tab and welcome tips
+    "workbench.welcomePage.walkthroughs.openOnInstall": false,
+    "workbench.tips.enabled": false,
+    "workbench.welcome.enabled": false,
+
+    // Disable Copilot / AI features (workshop uses Cline instead)
+    "github.copilot.enable": { "*": false },
+    "github.copilot.chat.enabled": false,
+    // Suppress VS Code 1.109+ built-in Chat / "Build with Agent" secondary sidebar
+    "chat.agent.enabled": false,
+    "chat.editor.showPanel": false,
+    "chat.commandCenter.enabled": false,
+    "chat.experimental.offerSetup": false,
+    "inlineChat.enabled": false,
+
+    // Suppress Cline telemetry warning (VS Code telemetry is already off above)
+    "cline.telemetry.enabled": false,
+
+    // TypeScript memory limits
+    "typescript.tsserver.maxTsServerMemory": 1024,
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.suggest.autoImports": "off",
+
+    // Limit open editors to reduce memory pressure
+    "workbench.editor.limit.enabled": true,
+    "workbench.editor.limit.value": 5,
+    "workbench.editor.limit.perEditorGroup": true,
+    "workbench.editor.closeEmptyGroups": true
+}

@@ -1,0 +1,53 @@
+<!-- Simple Next Page Navigation -->
+{% comment %}
+A simplified version that just shows next page navigation.
+Include this at the bottom of any page with: {% include simple_next_nav.html %}
+Supports multilingual navigation via page.lang (en/es/pt).
+{% endcomment %}
+
+{% assign current_url = page.permalink | default: page.url %}
+{% assign next_page_url = null %}
+{% assign next_page_title = null %}
+
+{% comment %}Select the navigation key based on page language{% endcomment %}
+{% assign page_lang = page.lang | default: "en" %}
+{% if page_lang == "es" %}
+  {% assign nav_key = "docs_es" %}
+{% elsif page_lang == "pt" %}
+  {% assign nav_key = "docs_pt" %}
+{% else %}
+  {% assign nav_key = "docs" %}
+{% endif %}
+
+{% comment %}Load i18n strings{% endcomment %}
+{% assign i18n = site.data.i18n[page_lang] | default: site.data.i18n.en %}
+
+{% comment %}Find the next page in navigation{% endcomment %}
+{% assign found_current = false %}
+{% for section in site.data.navigation[nav_key] %}
+  {% for child in section.children %}
+    {% if found_current %}
+      {% assign next_page_url = child.url %}
+      {% assign next_page_title = child.title %}
+      {% break %}
+    {% endif %}
+
+    {% if child.url == current_url %}
+      {% assign found_current = true %}
+    {% endif %}
+  {% endfor %}
+  {% if next_page_url %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}Display next page link if found{% endcomment %}
+{% if next_page_url %}
+<div style="margin-top: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 0.375rem; text-align: center;">
+  <p style="margin-bottom: 0.5rem; font-weight: 600; color: #495057;">{{ i18n.ready_for_next }}</p>
+  <a href="{{ next_page_url | relative_url }}" class="btn btn--primary" style="text-decoration: none; display: inline-block;">
+    {{ i18n.continue_to }}: {{ next_page_title }}
+    <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+  </a>
+</div>
+{% endif %}

@@ -1,0 +1,166 @@
+# Default values for mdb-openvscode.
+
+replicaCount: 1
+
+image:
+  repository: 979559056307.dkr.ecr.us-east-2.amazonaws.com/ai-arena-mdb-openvscode-linuxserver
+  pullPolicy: Always  # IfNotPresent
+  # Must match OPENVSCODE_VERSION ARG in mdb-openvscode-linuxserver.dockerfile
+  # (deploy-linuxserver.sh derives the pushed ECR tag from that ARG).
+  tag: "1.109.5"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations:
+    eks.amazonaws.com/role-arn: ""
+  name: ""
+
+hostNetwork: false
+
+podAnnotations:
+  instrumentation.opentelemetry.io/inject-java: "false"
+  instrumentation.opentelemetry.io/inject-nodejs: "false"
+  instrumentation.opentelemetry.io/inject-python: "false"
+  instrumentation.opentelemetry.io/inject-dotnet: "false"
+podLabels: {}
+
+podSecurityContext:
+  runAsUser: 0
+  fsGroup: 1000
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  ports:
+    - name: openvscode
+      port: 3000
+      targetPort: 3000
+    - name: web
+      port: 3001
+      targetPort: 3001
+    - name: mongodb-api
+      port: 5000
+      targetPort: 5000
+    - name: postgres-api
+      port: 5001
+      targetPort: 5001
+
+# Ports exposed by the main container only (excludes web/3001 — served by app-nginx sidecar)
+mainContainerPorts:
+  - name: openvscode
+    targetPort: 3000
+  - name: mongodb-api
+    targetPort: 5000
+  - name: postgres-api
+    targetPort: 5001
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources:
+  requests:
+    cpu: "1500m"
+    memory: "4Gi"
+  limits:
+    cpu: "3000m"
+    memory: "8Gi"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 5
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 90
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+
+persistence:
+  enabled: true
+  fileSystemId: ""
+  accessMode: ReadWriteMany
+  size: 250Mi
+  storageClass: ""
+  annotations: {}
+
+openvscode:
+  user: ""
+
+# Scenario configuration - these are typically overridden by Terraform
+scenarioConfig:
+  database:
+    mongodb: false
+    postgres: false
+  llm:
+    mcp: false
+
+# Environment variables for MCP connections
+env:
+  - name: PUID
+    value: "1000"
+  - name: PGID
+    value: "1000"
+  - name: TZ
+    value: "Etc/UTC"
+
+extraEnv: []
+
+# Results Processor Configuration
+# Nginx sidecar to serve the pre-built frontend app directly from the image filesystem
+appNginx:
+  enabled: true
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  port: 3001
+
+resultsProcessor:
+  enabled: false
+  image:
+    repository: maven
+    tag: "3.9.11-amazoncorretto-21-debian"
+    pullPolicy: IfNotPresent
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

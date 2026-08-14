@@ -1,0 +1,27 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+            ],
+            "Resource": [
+                "arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-sonnet-*",
+                "arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-3*",
+                "arn:aws:bedrock:*::foundation-model/us.anthropic.claude-sonnet-*",
+                "arn:aws:bedrock:*::foundation-model/us.anthropic.claude-3*",
+                "arn:aws:bedrock:*::foundation-model/amazon.*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:GetInferenceProfile",
+                "bedrock:ListInferenceProfiles"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

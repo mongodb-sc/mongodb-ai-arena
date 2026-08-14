@@ -1,0 +1,240 @@
+main:
+  - title: GitHub Repository
+    url: https://github.com/simonegaiera/mongodb-airbnb-workshop
+
+docs:
+  - title: "Workshop Introduction"
+    children:
+      - title: "Introduction"
+        url: /
+      - title: "Resources"
+        url: /resources/
+
+  - title: "Workshop Onboarding"
+    children:
+      - title: "AI Arena Overview"
+        url: /guided/
+      - title: "Environment: VSCode"
+        url: /guided/vscode/
+      - title: "Environment: VSCode"
+        url: /guided/vscode-nop/
+      - title: "Explore Collection Structure"
+        url: /guided/collection/
+      - title: "Power Up Cline with Skills"
+        url: /guided/skills/
+      - title: "Leaderboard"
+        url: /guided/leaderboard/
+
+  - title: "CRUD Operations"
+    children:
+      - title: "CRUD Operations"
+        url: /crud/
+      - title: "CRUD: Exercise 1"
+        url: /crud/1/
+      - title: "CRUD: Exercise 2"
+        url: /crud/2/
+      - title: "CRUD: Exercise 3"
+        url: /crud/3/
+      - title: "CRUD: Exercise 4"
+        url: /crud/4/
+      - title: "CRUD: Index 1"
+        url: /crud/index/
+      - title: "CRUD: Exercise 5"
+        url: /crud/5/
+      - title: "CRUD: Exercise 6"
+        url: /crud/6/
+      - title: "CRUD: Exercise 7"
+        url: /crud/7/
+      - title: "CRUD: Exercise 8"
+        url: /crud/8/
+
+  - title: "Aggregations"
+    children:
+      - title: "MongoDB Aggregations"
+        url: /pipeline/
+      - title: "Aggregations: Exercise 1"
+        url: /pipeline/1/
+      - title: "Aggregations: Exercise 2"
+        url: /pipeline/2/
+
+  - title: "Search"
+    children:
+      - title: "MongoDB Search"
+        url: /search/
+      - title: "Search: Indexes"
+        url: /search/index/
+      - title: "Hint: Search Indexes"
+        url: /search/index-hint/
+      - title: "Search: Exercise 1"
+        url: /search/1/
+      - title: "Search: Exercise 2"
+        url: /search/2/
+
+  - title: "Vector Search"
+    children:
+      - title: "MongoDB Vector Search"
+        url: /vector-search/
+      - title: "Vector Search: Indexes"
+        url: /vector-search/index/
+      - title: "Hint: Vector Search Indexes"
+        url: /vector-search/index-hint/
+      - title: "Vector Search: Exercise 1"
+        url: /vector-search/1/
+
+docs_es:
+  - title: "Introducción al Taller"
+    children:
+      - title: "Introducción"
+        url: /es/
+      - title: "Recursos"
+        url: /es/resources/
+
+  - title: "Incorporación al Taller"
+    children:
+      - title: "Descripción General de AI Arena"
+        url: /es/guided/
+      - title: "Entorno: VSCode"
+        url: /es/guided/vscode/
+      - title: "Entorno: VSCode"
+        url: /es/guided/vscode-nop/
+      - title: "Explorar la Estructura de la Colección"
+        url: /es/guided/collection/
+      - title: "Potencia Cline con Habilidades"
+        url: /es/guided/skills/
+      - title: "Tabla de Clasificación"
+        url: /es/guided/leaderboard/
+
+  - title: "Operaciones CRUD"
+    children:
+      - title: "Operaciones CRUD"
+        url: /es/crud/
+      - title: "CRUD: Ejercicio 1"
+        url: /es/crud/1/
+      - title: "CRUD: Ejercicio 2"
+        url: /es/crud/2/
+      - title: "CRUD: Ejercicio 3"
+        url: /es/crud/3/
+      - title: "CRUD: Ejercicio 4"
+        url: /es/crud/4/
+      - title: "CRUD: Índice 1"
+        url: /es/crud/index/
+      - title: "CRUD: Ejercicio 5"
+        url: /es/crud/5/
+      - title: "CRUD: Ejercicio 6"
+        url: /es/crud/6/
+      - title: "CRUD: Ejercicio 7"
+        url: /es/crud/7/
+      - title: "CRUD: Ejercicio 8"
+        url: /es/crud/8/
+
+  - title: "Agregaciones"
+    children:
+      - title: "Agregaciones de MongoDB"
+        url: /es/pipeline/
+      - title: "Agregaciones: Ejercicio 1"
+        url: /es/pipeline/1/
+      - title: "Agregaciones: Ejercicio 2"
+        url: /es/pipeline/2/
+
+  - title: "Búsqueda"
+    children:
+      - title: "Búsqueda MongoDB"
+        url: /es/search/
+      - title: "Búsqueda: Índices"
+        url: /es/search/index/
+      - title: "Pista: Índices de Búsqueda"
+        url: /es/search/index-hint/
+      - title: "Búsqueda: Ejercicio 1"
+        url: /es/search/1/
+      - title: "Búsqueda: Ejercicio 2"
+        url: /es/search/2/
+
+  - title: "Búsqueda Vectorial"
+    children:
+      - title: "Búsqueda Vectorial MongoDB"
+        url: /es/vector-search/
+      - title: "Búsqueda Vectorial: Índices"
+        url: /es/vector-search/index/
+      - title: "Pista: Índices de Búsqueda Vectorial"
+        url: /es/vector-search/index-hint/
+      - title: "Búsqueda Vectorial: Ejercicio 1"
+        url: /es/vector-search/1/
+
+docs_pt:
+  - title: "Introdução ao Workshop"
+    children:
+      - title: "Introdução"
+        url: /pt/
+      - title: "Recursos"
+        url: /pt/resources/
+
+  - title: "Integração ao Workshop"
+    children:
+      - title: "Visão Geral do AI Arena"
+        url: /pt/guided/
+      - title: "Ambiente: VSCode"
+        url: /pt/guided/vscode/
+      - title: "Ambiente: VSCode"
+        url: /pt/guided/vscode-nop/
+      - title: "Explorar a Estrutura da Coleção"
+        url: /pt/guided/collection/
+      - title: "Potencialize o Cline com Habilidades"
+        url: /pt/guided/skills/
+      - title: "Classificação"
+        url: /pt/guided/leaderboard/
+
+  - title: "Operações CRUD"
+    children:
+      - title: "Operações CRUD"
+        url: /pt/crud/
+      - title: "CRUD: Exercício 1"
+        url: /pt/crud/1/
+      - title: "CRUD: Exercício 2"
+        url: /pt/crud/2/
+      - title: "CRUD: Exercício 3"
+        url: /pt/crud/3/
+      - title: "CRUD: Exercício 4"
+        url: /pt/crud/4/
+      - title: "CRUD: Índice 1"
+        url: /pt/crud/index/
+      - title: "CRUD: Exercício 5"
+        url: /pt/crud/5/
+      - title: "CRUD: Exercício 6"
+        url: /pt/crud/6/
+      - title: "CRUD: Exercício 7"
+        url: /pt/crud/7/
+      - title: "CRUD: Exercício 8"
+        url: /pt/crud/8/
+
+  - title: "Agregações"
+    children:
+      - title: "Agregações MongoDB"
+        url: /pt/pipeline/
+      - title: "Agregações: Exercício 1"
+        url: /pt/pipeline/1/
+      - title: "Agregações: Exercício 2"
+        url: /pt/pipeline/2/
+
+  - title: "Pesquisa"
+    children:
+      - title: "Pesquisa MongoDB"
+        url: /pt/search/
+      - title: "Pesquisa: Índices"
+        url: /pt/search/index/
+      - title: "Dica: Índices de Pesquisa"
+        url: /pt/search/index-hint/
+      - title: "Pesquisa: Exercício 1"
+        url: /pt/search/1/
+      - title: "Pesquisa: Exercício 2"
+        url: /pt/search/2/
+
+  - title: "Pesquisa Vetorial"
+    children:
+      - title: "Pesquisa Vetorial MongoDB"
+        url: /pt/vector-search/
+      - title: "Pesquisa Vetorial: Índices"
+        url: /pt/vector-search/index/
+      - title: "Dica: Índices de Pesquisa Vetorial"
+        url: /pt/vector-search/index-hint/
+      - title: "Pesquisa Vetorial: Exercício 1"
+        url: /pt/vector-search/1/

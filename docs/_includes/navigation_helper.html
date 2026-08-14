@@ -1,0 +1,30 @@
+<!-- Navigation Helper: Flattens the navigation structure into a sequential list -->
+{% comment %}
+This include creates a flat list of all pages from the navigation structure
+to enable automatic next/previous page detection.
+{% endcomment %}
+
+{% assign flat_nav = "" | split: "" %}
+{% assign current_section = "" %}
+
+{% assign page_lang = page.lang | default: "en" %}
+{% if page_lang == "es" %}
+  {% assign nav_key = "docs_es" %}
+{% elsif page_lang == "pt" %}
+  {% assign nav_key = "docs_pt" %}
+{% else %}
+  {% assign nav_key = "docs" %}
+{% endif %}
+
+{% for section in site.data.navigation[nav_key] %}
+  {% for child in section.children %}
+    {% assign page_data = child.url | append: "|" | append: child.title %}
+    {% assign flat_nav = flat_nav | push: page_data %}
+  {% endfor %}
+{% endfor %}
+
+{% comment %}
+Store the flattened navigation in a global variable for use by other includes
+Format: each item is "url|title"
+{% endcomment %}
+{% assign site.flat_navigation = flat_nav %}

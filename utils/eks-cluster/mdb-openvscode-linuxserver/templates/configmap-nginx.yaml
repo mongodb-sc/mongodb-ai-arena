@@ -1,0 +1,19 @@
+{{- if .Values.appNginx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-app-nginx-cm
+  labels:
+    {{- include "mdb-openvscode.labels" . | nindent 4 }}
+data:
+  default.conf: |
+    server {
+        listen {{ .Values.appNginx.port }};
+
+        location / {
+            alias /home/workspace/mongodb-airbnb-workshop/app/out/;
+            index index.html;
+            try_files $uri $uri/ $uri.html /index.html;
+        }
+    }
+{{- end }}

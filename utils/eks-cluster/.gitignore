@@ -1,0 +1,14 @@
+
+# Terraform
+**/.terraform*
+**/terraform*.*
+*.old
+!terraform.tfvars.template
+trashme
+
+**/user_list.csv
+.venv/
+.env
+.env.production
+.env.local
+test-scenario-config.json

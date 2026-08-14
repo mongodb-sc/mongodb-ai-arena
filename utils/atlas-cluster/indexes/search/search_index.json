@@ -1,0 +1,19 @@
+{
+  "analyzer": "lucene.english",
+  "searchAnalyzer": "lucene.english",
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "amenities": { "type": "token" },
+      "beds": { "type": "number" },
+      "name": {
+        "analyzer": "lucene.english",
+        "foldDiacritics": false,
+        "maxGrams": 7,
+        "minGrams": 3,
+        "type": "autocomplete"
+      },
+      "property_type": { "type": "token" }
+    }
+  }
+}

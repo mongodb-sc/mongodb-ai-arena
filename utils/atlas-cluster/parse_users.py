@@ -1,0 +1,108 @@
+import csv
+import json
+import sys
+import re
+from collections import OrderedDict
+
+def get_user_id_from_email(email):
+    """Convert email to sanitized user ID"""
+    email_prefix = email.strip().split('@')[0]
+    return re.sub(r'[^a-zA-Z0-9]', '-', email_prefix).lower()
+
+def parse_csv(filename):
+    """Parse CSV file and return users with both name and email"""
+    users = OrderedDict()
+    
+    # Handle null, empty, or "null" string filename
+    if not filename or filename.lower() == 'null' or filename.strip() == '':
+        return users
+    
+    try:
+        with open(filename, mode='r') as csvfile:
+            reader = csv.DictReader(csvfile, skipinitialspace=True)
+            for row in reader:
+                # Email is required to generate user_id
+                if 'email' not in row or not row['email']:
+                    print(f"Warning: Skipping row with missing email: {row}", file=sys.stderr)
+                    continue
+                    
+                user_id = get_user_id_from_email(row['email'])
+                
+                # Build name from available fields
+                name_parts = []
+                if 'name' in row and row['name']:
+                    name_parts.append(row['name'].strip())
+                if 'surname' in row and row['surname']:
+                    name_parts.append(row['surname'].strip())
+                
+                full_name = ' '.join(name_parts) if name_parts else user_id  # Fallback to user_id if no name
+                
+                users[user_id] = {
+                    'name': full_name,
+                    'email': row['email'].strip()
+                }
+    except FileNotFoundError:
+        print(f"Warning: CSV file '{filename}' not found. Only additional users will be processed.", file=sys.stderr)
+    except Exception as e:
+        print(f"Warning: Error reading CSV file '{filename}': {e}. Only additional users will be processed.", file=sys.stderr)
+    
+    return users
+
+def add_additional_users(users, count, cluster_name=None, start_index=0):
+    """Add additional numbered users (clustername0, clustername1, etc.)"""
+    for i in range(start_index, start_index + count):
+        if cluster_name:
+            user_id = f"{cluster_name}{i}"
+            users[user_id] = {
+                'email': None
+            }
+        else:
+            user_id = f"user{i}"
+            users[user_id] = {
+                'email': None
+            }
+    return users
+
+def get_all_users(filename, additional_count=0, cluster_name=None, start_index=0):
+    """Get all users (from CSV + additional) in unified format"""
+    users = parse_csv(filename)
+    users = add_additional_users(users, additional_count, cluster_name, start_index)
+    return users
+
+def get_user_ids(filename, additional_count=0, cluster_name=None, start_index=0):
+    """Get just the user IDs (for Terraform compatibility)"""
+    users = get_all_users(filename, additional_count, cluster_name, start_index)
+    return list(users.keys())
+
+def get_user_emails(filename, additional_count=0, cluster_name=None, start_index=0):
+    """Get user ID to email mapping (for Terraform compatibility)"""
+    users = get_all_users(filename, additional_count, cluster_name, start_index)
+    # Return format expected by Terraform external data source
+    return {user_id: user_data['email'] for user_id, user_data in users.items()}
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python3 parse_users.py <csv_file> [output_format] [additional_count] [cluster_name] [start_index]", file=sys.stderr)
+        sys.exit(1)
+    
+    filename = sys.argv[1]
+    output_format = sys.argv[2] if len(sys.argv) > 2 else 'email'
+    additional_count = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+    cluster_name = sys.argv[4] if len(sys.argv) > 4 else None
+    start_index = int(sys.argv[5]) if len(sys.argv) > 5 else 0
+    
+    # Handle null filename from Terraform
+    if filename.lower() == 'null':
+        filename = None
+    
+    if output_format == 'email':
+        # For Terraform external data source - returns {user_id: email}
+        result = get_user_emails(filename, additional_count, cluster_name, start_index)
+    elif output_format == 'ids':
+        # Returns list of user IDs
+        result = get_user_ids(filename, additional_count, cluster_name, start_index)
+    else:
+        # Full user data - returns {user_id: {name, email}}
+        result = get_all_users(filename, additional_count, cluster_name, start_index)
+    
+    print(json.dumps(result))

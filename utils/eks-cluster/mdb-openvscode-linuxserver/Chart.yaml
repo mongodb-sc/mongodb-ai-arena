@@ -1,0 +1,9 @@
+apiVersion: v2
+name: mdb-openvscode
+description: Helm chart for mdb-openvscode using linuxserver/openvscode-server
+
+type: application
+
+version: 0.2.21
+
+appVersion: "1.16.0"

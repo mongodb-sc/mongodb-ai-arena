@@ -1,0 +1,105 @@
+customer:
+  name: "customer"
+
+mongodb:
+  public_key: "PUBLIC_KEY"
+  private_key: "PRIVATE_KEY"
+  project_name: "PROJECT_NAME"
+  cluster_name: "arena-cluster"
+  cluster_region: "US_EAST_2"
+  instance_size: "M30"
+  additional_users_count: 5
+  create_indexes: false
+  dedicated_project: false  # Set to true for dedicated projects (enables: maintenance window, backup schedule, 0.0.0.0/0 IP access, Cloudflare IP access)
+  database_admin_password: "MongoArenaAdminDummy"
+  customer_user_password: "MongoArenaDummy"
+
+aws:
+  region: "us-east-2"
+  profile: "Solution-Architects.User-979559056307"
+  # Optional: CIDR block for the EKS VPC. Defaults to 10.0.0.0/16 when not set
+  # (the two public subnets are carved out as the first two /22s, e.g.
+  # 10.0.0.0/22 and 10.0.4.0/22). Must be /21 or larger.
+  #
+  # Set this to a distinct block whenever another arena that shares the same
+  # Atlas project (same mongodb.project_name with dedicated_project: false) is
+  # already peered, otherwise Atlas rejects the peering with
+  # OVERLAPPING_CIDR_BLOCK. Changing it on a live deployment replaces the VPC
+  # and everything in it (EKS cluster, nodegroups, load balancers, Aurora).
+  # vpc_cidr: "10.0.0.0/16"
+
+domain:
+  email: "arena@mongodb.com"
+
+scenario:
+  version: "1.0"
+  repository: "https://github.com/simonegaiera/mongodb-airbnb-workshop"
+  branch: "main"
+  portal:
+    admin_password: "ArenaAdminPassword123!"
+  database:
+    mongodb: true
+    postgres: false
+  llm:
+    enabled: true
+    proxy:
+      enabled: true
+      type: "litellm"
+      service-name: "litellm-service"
+      port: 4000
+      cache: true
+      redis:
+        enabled: true
+        service:
+          name: "redis-master"
+          port: 6379
+    mcp: true
+    provider: "openai"
+    model: "gpt-5-chat"
+    bedrock: false
+    region: "us-east-2"
+  frontend: "app"
+  backend: "server"
+  vscode:
+    # Pre-create the participant's Atlas connection in the MongoDB VSCode extension
+    # (mdb.presetConnections in the workspace settings). Set to false to have
+    # participants add the connection manually.
+    preconfigure_mongodb_connection: true
+    # Start the MongoDB MCP server automatically instead of prompting the participant
+    # (mdb.mcp.server). Set to false to leave the prompt in place.
+    autostart_mcp_server: true
+  cline:
+    # Pre-configure the Cline extension with the LiteLLM provider so participants skip
+    # the "Use your own API key" setup screen. Set to false to have them configure it
+    # manually. The values below match the workshop instructions.
+    preconfigure: true
+    base_url: "http://litellm-service:4000"
+    api_key: "noop"
+    model: "gpt-5-mini"
+  leaderboard:
+    type: "timed"
+    # close_on: "2025-11-04T16:03:00.000Z"  # Optional: ISO 8601 date when leaderboard freezes (UTC)
+    prizes:
+      enabled: true
+      where: "Happy Hour"
+      when: "4:30 PM"
+  instructions:
+    base: "navigation-guided.yml"
+    sections:
+      - title: "Workshop Introduction"
+        content: []
+      - title: "Workshop Onboarding"
+        content:
+          - "/guided/"
+          - "/guided/vscode/"
+          - "/guided/collection/"
+          - "/guided/skills/"
+          - "/guided/leaderboard/"
+      - title: "CRUD Operations"
+        content: []
+      - title: "Aggregations"
+        content: []
+      - title: "Search"
+        content: []
+      - title: "Vector Search"
+        content: []

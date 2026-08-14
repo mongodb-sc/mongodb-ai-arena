@@ -1,0 +1,71 @@
+{% comment %}
+Language switcher include.
+Swaps /es/ and /pt/ prefixes in the current page URL.
+Falls back to the language root if the translated page does not exist.
+Usage: {% include lang_switcher.html %}
+{% endcomment %}
+
+{% assign page_lang = page.lang | default: "en" %}
+{% assign current_url = page.permalink | default: page.url %}
+
+{% comment %}Compute candidate URLs for the other languages{% endcomment %}
+{% if page_lang == "es" %}
+  {% assign en_candidate = current_url | remove_first: "/es" %}
+  {% assign pt_candidate = current_url | replace_first: "/es/", "/pt/" %}
+  {% if en_candidate == "" %}{% assign en_candidate = "/" %}{% endif %}
+{% elsif page_lang == "pt" %}
+  {% assign en_candidate = current_url | remove_first: "/pt" %}
+  {% assign es_candidate = current_url | replace_first: "/pt/", "/es/" %}
+  {% if en_candidate == "" %}{% assign en_candidate = "/" %}{% endif %}
+{% else %}
+  {% if current_url == "/" %}
+    {% assign es_candidate = "/es/" %}
+    {% assign pt_candidate = "/pt/" %}
+  {% else %}
+    {% assign es_candidate = "/es" | append: current_url %}
+    {% assign pt_candidate = "/pt" | append: current_url %}
+  {% endif %}
+{% endif %}
+
+{% comment %}Verify the translated page exists; otherwise fall back to the language root.{% endcomment %}
+{% if es_candidate %}
+  {% assign es_url = "/es/" %}
+  {% for p in site.pages %}
+    {% if p.url == es_candidate %}{% assign es_url = es_candidate %}{% break %}{% endif %}
+  {% endfor %}
+{% endif %}
+{% if pt_candidate %}
+  {% assign pt_url = "/pt/" %}
+  {% for p in site.pages %}
+    {% if p.url == pt_candidate %}{% assign pt_url = pt_candidate %}{% break %}{% endif %}
+  {% endfor %}
+{% endif %}
+{% if en_candidate %}
+  {% assign en_url = "/" %}
+  {% for p in site.pages %}
+    {% if p.url == en_candidate %}{% assign en_url = en_candidate %}{% break %}{% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="lang-switcher" style="background-color: #fff; border-bottom: 1px solid #f2f3f3; font-size: 0.8rem; color: #494e52; letter-spacing: 0.03em;">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0.35rem 1em; text-align: right;">
+    <span style="margin-right: 0.5rem; opacity: 0.6;">🌐</span>
+    {% if page_lang == "en" %}
+      <strong style="color: #2c2e30;">EN</strong>
+    {% else %}
+      <a href="{{ en_url | relative_url }}" style="color: #0d6efd; text-decoration: none;">EN</a>
+    {% endif %}
+    <span style="opacity: 0.4; margin: 0 0.3rem;">|</span>
+    {% if page_lang == "es" %}
+      <strong style="color: #2c2e30;">ES</strong>
+    {% else %}
+      <a href="{{ es_url | relative_url }}" style="color: #0d6efd; text-decoration: none;">ES</a>
+    {% endif %}
+    <span style="opacity: 0.4; margin: 0 0.3rem;">|</span>
+    {% if page_lang == "pt" %}
+      <strong style="color: #2c2e30;">PT</strong>
+    {% else %}
+      <a href="{{ pt_url | relative_url }}" style="color: #0d6efd; text-decoration: none;">PT</a>
+    {% endif %}
+  </div>
+</div>

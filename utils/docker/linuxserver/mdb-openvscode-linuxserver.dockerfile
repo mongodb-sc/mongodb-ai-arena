@@ -8,11 +8,11 @@ FROM lscr.io/linuxserver/openvscode-server:${OPENVSCODE_VERSION}
 
 # Declare ARG variables after FROM to make them available in build stages
 ARG NODE_VERSION=24
-ARG NPM_VERSION=11.16.0
+ARG NPM_VERSION=11.17.0
 ARG PYTHON_VERSION=3.12
 ARG JAVA_VERSION=21
-ARG MONGODB_MCP_VERSION=1.11.0
-ARG MONGOSH_VERSION=2.8.3
+ARG MONGODB_MCP_VERSION=2.1.0
+ARG MONGOSH_VERSION=2.10.0
 ARG AGENT_SKILLS_VERSION=v1.1.0
 
 # Set environment variable to avoid interactive prompts during package installation

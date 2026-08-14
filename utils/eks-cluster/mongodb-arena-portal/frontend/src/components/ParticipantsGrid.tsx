@@ -57,7 +57,7 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
 
   const getWorkspaceUrls = (participant: Participant, index: number) => {
     const baseDomain = getBaseDomain()
-    const repoName = process.env.NEXT_PUBLIC_REPO_NAME || 'mongodb-airbnb-workshop'
+    const repoName = process.env.NEXT_PUBLIC_REPO_NAME || 'mongodb-ai-arena'
     const serverPath = process.env.NEXT_PUBLIC_SERVER_PATH || 'server'
 
     // Use participant._id for workspace URLs

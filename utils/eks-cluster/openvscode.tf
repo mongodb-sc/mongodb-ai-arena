@@ -104,15 +104,15 @@ resource "helm_release" "user_openvscode" {
         },
         {
           name  = "SCENARIO_PATH"
-          value = "/home/workspace/mongodb-airbnb-workshop/utils/eks-cluster/results-processor"
+          value = "/home/workspace/mongodb-ai-arena/utils/eks-cluster/results-processor"
         },
         {
           name  = "SIGNAL_FILE_PATH"
-          value = "/home/workspace/mongodb-airbnb-workshop/server/signal"
+          value = "/home/workspace/mongodb-ai-arena/server/signal"
         },
         {
           name  = "LOG_PATH"
-          value = "/home/workspace/mongodb-airbnb-workshop/server/results"
+          value = "/home/workspace/mongodb-ai-arena/server/results"
         },
         {
           name  = "WORKSHOP_USER"

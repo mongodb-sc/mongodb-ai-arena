@@ -50,12 +50,12 @@ Your mission is to **create the best backend possible** for this application. Th
 
 ### 🚀 Interactive Documentation
 
-- **[📖 Open in Swagger Editor](https://editor.swagger.io/?url=https%3A//raw.githubusercontent.com/simonegaiera/mongodb-airbnb-workshop/main/docs/assets/files/swagger.json)**  
+- **[📖 Open in Swagger Editor](https://editor.swagger.io/?url=https%3A//raw.githubusercontent.com/mongodb-sc/mongodb-ai-arena/main/docs/assets/files/swagger.json)**  
   1. Go to Swagger Editor.  
   2. Click on **File > Import URL**.  
   3. Paste this URL:  
      ```
-     https://raw.githubusercontent.com/simonegaiera/mongodb-airbnb-workshop/main/docs/assets/files/swagger.json
+     https://raw.githubusercontent.com/mongodb-sc/mongodb-ai-arena/main/docs/assets/files/swagger.json
      ```
   4. The API documentation will load automatically.
 

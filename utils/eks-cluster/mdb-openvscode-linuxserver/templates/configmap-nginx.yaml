@@ -11,7 +11,7 @@ data:
         listen {{ .Values.appNginx.port }};
 
         location / {
-            alias /home/workspace/mongodb-airbnb-workshop/app/out/;
+            alias /home/workspace/mongodb-ai-arena/app/out/;
             index index.html;
             try_files $uri $uri/ $uri.html /index.html;
         }

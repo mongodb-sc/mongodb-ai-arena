@@ -142,20 +142,20 @@ RUN git clone --depth 1 --branch ${AGENT_SKILLS_VERSION} https://github.com/mong
     rm -rf /tmp/agent-skills
 
 # Task 1: Clone repository into the pre-bake cache
-RUN git clone -b ${REPO_BRANCH} ${REPO_URL} /opt/prebaked/mongodb-airbnb-workshop
+RUN git clone -b ${REPO_BRANCH} ${REPO_URL} /opt/prebaked/mongodb-ai-arena
 
 # Task 4: Dummy backend .env — overwritten at runtime with real Atlas credentials
 RUN printf 'PORT=5000\nMONGODB_URI=mongodb+srv://PLACEHOLDER:PLACEHOLDER@PLACEHOLDER/?retryWrites=true&w=majority\nDATABASE_NAME=PLACEHOLDER\n' \
-    > /opt/prebaked/mongodb-airbnb-workshop/server/.env
+    > /opt/prebaked/mongodb-ai-arena/server/.env
 
 # Task 2: Pre-install server dependencies and save package.json checksum
-RUN cd /opt/prebaked/mongodb-airbnb-workshop/server && \
+RUN cd /opt/prebaked/mongodb-ai-arena/server && \
     npm install --legacy-peer-deps && \
     md5sum package.json > node_modules/.package-checksum
 
 # Task 3: Pre-install and pre-build frontend with dummy .env
 # BACKEND_URL is a placeholder — runtime rewrites .env and rebuilds with real URL
-RUN cd /opt/prebaked/mongodb-airbnb-workshop/app && \
+RUN cd /opt/prebaked/mongodb-ai-arena/app && \
     printf 'WORKSHOP_USER=/app\nBACKEND_URL=https://PLACEHOLDER/backend\n' > .env && \
     npm install --legacy-peer-deps && \
     md5sum package.json > node_modules/.package-checksum && \

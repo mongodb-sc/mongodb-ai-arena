@@ -61,7 +61,7 @@ else
     echo_with_timestamp "Warning: Enhanced scenario config file not found at /home/workspace/scenario-config/enhanced-scenario-config.json"
     SCENARIO_CONFIG="{}"
     # Default repository if config not found
-    REPO_NAME="mongodb-airbnb-workshop"
+    REPO_NAME="mongodb-ai-arena"
 fi
 
 # Install uv and create virtual environment only if both PostgreSQL and MCP are enabled

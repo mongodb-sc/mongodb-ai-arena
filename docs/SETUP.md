@@ -4,7 +4,7 @@
 
 ```bash
 # Navigate to docs folder
-cd mongodb-airbnb-workshop/docs
+cd mongodb-ai-arena/docs
 
 # Install gems locally (avoids permission issues)
 bundle config set --local path 'vendor/bundle'

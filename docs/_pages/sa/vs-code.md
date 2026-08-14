@@ -27,7 +27,7 @@ Before you begin, make sure you have:
    ```
 3. Navigate into the project folder:
    ```bash
-   cd mongodb-airbnb-workshop
+   cd mongodb-ai-arena
    ```
 
 > **Pro Tip:**  

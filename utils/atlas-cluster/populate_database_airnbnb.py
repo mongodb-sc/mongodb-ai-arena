@@ -331,15 +331,30 @@ def create_views(client, common_database):
         {
             '$sort': { 'timestamp': 1 }
         },
+        # Deduplicate repeated/duplicate submissions of the same exercise by
+        # the same user, keeping only their earliest submission
         {
             '$group': {
                 '_id': {
                     'section': '$section',
-                    'name': '$name'
+                    'name': '$name',
+                    'username': '$username'
+                },
+                'timestamp': { '$first': '$timestamp' }
+            }
+        },
+        {
+            '$sort': { 'timestamp': 1 }
+        },
+        {
+            '$group': {
+                '_id': {
+                    'section': '$_id.section',
+                    'name': '$_id.name'
                 },
                 'users': {
                     '$push': {
-                        'username': '$username',
+                        'username': '$_id.username',
                         'timestamp': '$timestamp'
                     }
                 }
@@ -453,9 +468,9 @@ def create_views(client, common_database):
                 }, 
                 'lastTimestamp': {
                     '$last': '$timestamp'
-                }, 
-                'count': {
-                    '$count': {}
+                },
+                'exerciseNames': {
+                    '$addToSet': '$name'
                 }
             }
         }, {
@@ -489,10 +504,13 @@ def create_views(client, common_database):
                         },
                         '$_id'
                     ]
+                },
+                'count': {
+                    '$size': '$exerciseNames'
                 }
             }
         }, {
-            '$unset': "participants_info"
+            '$unset': ['participants_info', 'exerciseNames']
         }, {
             '$sort': {
                 'count': -1, 
@@ -539,7 +557,11 @@ def create_views(client, common_database):
         },
         {
             '$addFields': {
-                'exercisesSolved': { '$size': '$results' }
+                # Count distinct exercise names so duplicate/repeated
+                # submissions of the same exercise aren't double-counted
+                'exercisesSolved': {
+                    '$size': { '$setUnion': ['$results.name', []] }
+                }
             }
         },
         {

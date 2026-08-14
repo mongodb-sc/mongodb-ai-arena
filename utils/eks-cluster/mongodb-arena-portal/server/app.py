@@ -833,13 +833,17 @@ def get_user_results(username):
 
         participant_name = participant.get('name', username) if participant else username
 
-        logger.info(f"Retrieved {len(user_results)} results for user {username}")
+        # Count distinct exercise names so duplicate/repeated submissions of
+        # the same exercise aren't double-counted in "Total Exercises Completed"
+        distinct_exercise_count = len({r.get('name') for r in user_results})
+
+        logger.info(f"Retrieved {len(user_results)} results ({distinct_exercise_count} distinct exercises) for user {username}")
         return jsonify({
             'success': True,
             'username': username,
             'participant_name': participant_name,
             'results': user_results,
-            'count': len(user_results)
+            'count': distinct_exercise_count
         }), 200
 
     except Exception as e:

@@ -4,6 +4,6 @@ description: Helm chart for mdb-openvscode using linuxserver/openvscode-server
 
 type: application
 
-version: 0.2.21
+version: 0.2.23
 
 appVersion: "1.16.0"

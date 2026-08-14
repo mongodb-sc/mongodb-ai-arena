@@ -6,9 +6,13 @@ ARG OPENVSCODE_VERSION=1.109.5
 
 FROM lscr.io/linuxserver/openvscode-server:${OPENVSCODE_VERSION}
 
+ARG REPO_NAME=mongodb-ai-arena
+ARG REPO_URL=https://github.com/mongodb-sc/${REPO_NAME}
+ARG REPO_BRANCH=main
+
 # Declare ARG variables after FROM to make them available in build stages
 ARG NODE_VERSION=24
-ARG NPM_VERSION=11.17.0
+ARG NPM_VERSION=12.0.2
 ARG PYTHON_VERSION=3.12
 ARG JAVA_VERSION=21
 ARG MONGODB_MCP_VERSION=2.1.0
@@ -132,8 +136,6 @@ RUN chown -R 1000:1000 /config/Cline
 # at /home/workspace. user_operations.sh seeds the workspace from here on
 # first start (avoids full clone), then git pulls only the delta.
 # =============================================================================
-ARG REPO_URL=https://github.com/mongodb-sc/mongodb-ai-arena
-ARG REPO_BRANCH=main
 
 # MongoDB agent skills for Cline (.cline/skills seeded to workspace at runtime)
 RUN git clone --depth 1 --branch ${AGENT_SKILLS_VERSION} https://github.com/mongodb/agent-skills.git /tmp/agent-skills && \
@@ -142,24 +144,38 @@ RUN git clone --depth 1 --branch ${AGENT_SKILLS_VERSION} https://github.com/mong
     rm -rf /tmp/agent-skills
 
 # Task 1: Clone repository into the pre-bake cache
-RUN git clone -b ${REPO_BRANCH} ${REPO_URL} /opt/prebaked/mongodb-ai-arena
+RUN git clone -b ${REPO_BRANCH} ${REPO_URL} /opt/prebaked/${REPO_NAME}
 
 # Task 4: Dummy backend .env — overwritten at runtime with real Atlas credentials
 RUN printf 'PORT=5000\nMONGODB_URI=mongodb+srv://PLACEHOLDER:PLACEHOLDER@PLACEHOLDER/?retryWrites=true&w=majority\nDATABASE_NAME=PLACEHOLDER\n' \
-    > /opt/prebaked/mongodb-ai-arena/server/.env
+    > /opt/prebaked/${REPO_NAME}/server/.env
 
 # Task 2: Pre-install server dependencies and save package.json checksum
-RUN cd /opt/prebaked/mongodb-ai-arena/server && \
+RUN cd /opt/prebaked/${REPO_NAME}/server && \
     npm install --legacy-peer-deps && \
     md5sum package.json > node_modules/.package-checksum
 
 # Task 3: Pre-install and pre-build frontend with dummy .env
 # BACKEND_URL is a placeholder — runtime rewrites .env and rebuilds with real URL
-RUN cd /opt/prebaked/mongodb-ai-arena/app && \
+RUN cd /opt/prebaked/${REPO_NAME}/app && \
     printf 'WORKSHOP_USER=/app\nBACKEND_URL=https://PLACEHOLDER/backend\n' > .env && \
     npm install --legacy-peer-deps && \
     md5sum package.json > node_modules/.package-checksum && \
     npm run build
 
-# Ensure the runtime user (abc, UID 1000 via PUID) can read and write the cache
-RUN chown -R 1000:1000 /opt/prebaked
+# Ensure the runtime user (abc) can read and write the cache.
+#
+# NOTE: PUID/PGID only remap abc's uid/gid via the base image's own s6-overlay
+# entrypoint. The Helm chart's initContainer (workspace-setup) overrides the
+# entrypoint with its own "command", so that remapping never runs there — abc
+# keeps whatever uid/gid is baked into this image (linuxserver default, NOT
+# necessarily 1000:1000). Chown by name, not numeric id, so this stays correct
+# regardless of what that baked-in uid/gid is.
+RUN chown -R abc:abc /opt/prebaked
+
+# All npm/pip/uv/extension-install commands above run as root during the build, and
+# since the base image sets HOME=/config, their caches (notably npm's at /config/.npm,
+# plus /config/.openvscode-server extensions/data) end up root-owned. At runtime abc
+# runs "npm install" (see above), so a later run in user_operations.sh fails with
+# EACCES on those root-owned cache files. Recursively reclaim /config here.
+RUN chown -R abc:abc /config

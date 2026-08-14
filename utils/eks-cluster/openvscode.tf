@@ -50,7 +50,7 @@ resource "helm_release" "user_openvscode" {
   name       = substr("vscode-${each.value}", 0, 53)
   repository = "local"
   chart      = "./mdb-openvscode-linuxserver"
-  version    = "0.2.21"
+  version    = "0.2.23"
   timeout    = 600
 
   values = [

@@ -35,9 +35,7 @@ data:
           "command": "npx",
           "args": [
             "-y",
-            "mongodb-mcp-server",
-            "--connectionString",
-            "{{ index $.Values.extraEnv 0 "value" }}"
+            "mongodb-mcp-server"
           ],
           "env": {
             "MDB_MCP_CONNECTION_STRING": "{{ index $.Values.extraEnv 0 "value" }}"

@@ -35,7 +35,7 @@ resource "mongodbatlas_project" "project" {
   org_id = data.mongodbatlas_roles_org_id.org.org_id
 
   dynamic "limits" {
-    for_each = local.required_user_limit > 100 ? [1] : []
+    for_each = local.required_user_limit > local.current_user_limit ? [1] : []
     content {
       name  = "atlas.project.security.databaseAccess.users"
       value = local.required_user_limit
@@ -165,24 +165,40 @@ locals {
   # Resolve the project id from either the created resource or the data lookup
   project_id = var.dedicated_project ? mongodbatlas_project.project[0].id : data.mongodbatlas_project.project[0].id
 
-  # Total database users we provision: 1 admin (user-main) + one per user_id
-  required_user_limit = length(local.user_ids) + 31
+  # Actual number of database users Atlas currently reports for this project.
+  # For a shared (non-dedicated) project this reflects users created by ALL
+  # customers/environments sharing it, not just this Terraform state. For a
+  # freshly-created dedicated project there's nothing to look up yet.
+  current_user_count = var.dedicated_project ? 0 : try(
+    [for l in data.mongodbatlas_project.project[0].limits : l.current_usage
+    if l.name == "atlas.project.security.databaseAccess.users"][0],
+    0
+  )
 
   # Current effective project limit on database users (Atlas default is 100).
   # A freshly-created dedicated project starts at the default, so skip the lookup.
   current_user_limit = var.dedicated_project ? 100 : try(
     [for l in data.mongodbatlas_project.project[0].limits : l.value
-     if l.name == "atlas.project.security.databaseAccess.users"][0],
+    if l.name == "atlas.project.security.databaseAccess.users"][0],
     100
   )
+
+  # Total database users the project needs to support once this apply
+  # completes: users already in the project (possibly created by other
+  # customers/environments sharing it) + the ones this run adds (1 admin +
+  # one per user_id), plus a buffer so we don't need another PATCH on every
+  # single apply.
+  required_user_limit = local.current_user_count + length(local.user_ids) + 31
 }
 
 # For dedicated projects the limit is set via the limits block above. For an
-# existing project (data source path) we cannot manage it as a terraform-owned
-# attribute, so PATCH it via the Atlas Admin API when the default 100 isn't
-# enough. Triggered on limit_value so it only re-runs when the target changes.
+# existing (possibly shared) project we cannot manage the limit as a
+# terraform-owned attribute, so PATCH it via the Atlas Admin API whenever the
+# users this apply needs (on top of what's already in the project) would
+# exceed the project's current limit. Triggered on limit_value so it only
+# re-runs when the target changes.
 resource "null_resource" "raise_database_users_limit" {
-  count = (!var.dedicated_project && local.required_user_limit > 100) ? 1 : 0
+  count = (!var.dedicated_project && local.required_user_limit > local.current_user_limit) ? 1 : 0
 
   triggers = {
     project_id  = local.project_id

@@ -69,6 +69,48 @@ terragrunt import --working-dir=eks-cluster 'helm_release.user_openvscode["arena
 
 ---
 
+### 2. Nginx 50x Bad Gateway / Service Unavailable Error
+
+**Error Message:**
+```
+502 Bad Gateway
+```
+or
+```
+503 Service Unavailable
+```
+when accessing any of the workshop URLs (e.g. `https://<user>.<domain>/...`).
+
+**Cause:**
+The `mdb-nginx` pod can occasionally get stuck serving stale configuration or environment variables. This happens because the Deployment's rolling-restart trigger (a checksum annotation) does not always cover every value that can change, so `terraform apply` can update the underlying Helm values/ConfigMaps without Kubernetes automatically restarting the pod to pick them up. The fix is to manually delete the pod so Kubernetes recreates it with the current configuration.
+
+**Solution:**
+
+1. **Identify the `mdb-nginx` pod:**
+   ```bash
+   kubectl get pods -n default | grep nginx
+   ```
+
+2. **Delete the `mdb-nginx` pod** (replace with the actual pod name from the previous step):
+   ```bash
+   kubectl delete pod mdb-nginx-<pod-hash> -n default
+   ```
+
+3. **Verify a new pod comes up and is `Running` / `1/1 Ready`:**
+   ```bash
+   kubectl get pods -n default | grep nginx
+   ```
+
+   > 💡 **Note:** The Deployment (and its Pod Disruption Budget) will automatically create a replacement pod within a few seconds. There is no need to re-run `terraform apply` or `terragrunt apply` for this — deleting the pod is sufficient.
+
+4. **(Optional) Check the new pod's logs if the error persists:**
+   ```bash
+   kubectl logs -n default <new-pod-name>
+   kubectl describe pod -n default <new-pod-name>
+   ```
+
+---
+
 ## Getting Help
 
 If you encounter an error not listed here, please:

@@ -35,14 +35,24 @@ locals {
     [for idx in range(length(local.nginx_user_chunks)) : "mdb-nginx-user-config-cm-${idx}"]
   )
 
-  # Checksum of all nginx server-block configs (base + per-user). Used as a pod
-  # annotation so that any change to the ConfigMap contents (e.g. adding a new
-  # user) forces a rolling restart of the mdb-nginx Deployment. Without this,
-  # Kubernetes only updates the mounted ConfigMap files on disk but never
-  # signals the already-running nginx process to reload them.
+  # Checksum of everything that ends up baked into the mdb-nginx ConfigMaps
+  # (server-block configs, nginx.conf, HTML pages, favicon). Used as a pod
+  # annotation so that any change to this content (e.g. adding a new user,
+  # editing nginx.conf, or updating the HTML pages) forces a rolling restart
+  # of the mdb-nginx Deployment. Without this, Kubernetes only updates the
+  # mounted ConfigMap files on disk but never signals the already-running
+  # nginx process to reload them, leaving stale pods running until someone
+  # manually deletes them.
   nginx_config_checksum = sha256(jsonencode(merge(
     { "00-base.conf" = local.base_nginx_config },
-    local.nginx_user_config_map
+    local.nginx_user_config_map,
+    {
+      "nginx.conf"  = file("${path.module}/nginx-conf-files/nginx.conf")
+      "index.html"  = local.index_nginx_html
+      "404.html"    = local.notfound_nginx_html
+      "50x.html"    = local.error_nginx_html
+      "favicon.ico" = filebase64("${path.module}/nginx-html-files/favicon.ico")
+    }
   )))
 }
 

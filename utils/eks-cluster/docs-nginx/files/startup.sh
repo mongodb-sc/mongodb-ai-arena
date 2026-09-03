@@ -136,6 +136,44 @@ cp /tmp/navigation_from_configmap.yml _data/navigation.yml
 echo "Navigation content from enhanced ConfigMap:"
 cat _data/navigation.yml
 
+# Generate _data/extensions.yml from enhanced ConfigMap so Jekyll can
+# conditionally hide setup steps that are already auto-configured in the pods.
+echo "Generating extensions configuration from enhanced ConfigMap..."
+cat > /tmp/generate_extensions.py << 'PYEOF'
+#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+def generate_extensions():
+    try:
+        with open('/etc/scenario-config/enhanced-scenario-config.json', 'r') as f:
+            config = json.load(f)
+
+        scenario = config.get('scenario', {})
+        extensions = {
+            'cline_autoconfigured':   bool(scenario.get('cline', {}).get('preconfigure', False)),
+            'mongodb_autoconfigured': bool(scenario.get('vscode', {}).get('preconfigure_mongodb_connection', False)),
+            'mcp_autoconfigured':     bool(scenario.get('vscode', {}).get('autostart_mcp_server', False)),
+        }
+
+        with open('_data/extensions.yml', 'w') as f:
+            yaml.dump(extensions, f, default_flow_style=False, sort_keys=True)
+
+        print(f"Extensions config written: {extensions}", file=sys.stderr)
+        return 0
+    except Exception as e:
+        print(f"Warning: could not generate extensions.yml ({e}), using repo defaults", file=sys.stderr)
+        return 1
+
+sys.exit(generate_extensions())
+PYEOF
+
+python3 /tmp/generate_extensions.py || true
+
+echo "Extensions config:"
+cat _data/extensions.yml
+
 echo "Modified _config.yml content:"
 cat _config.yml
 

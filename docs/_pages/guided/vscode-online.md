@@ -8,16 +8,18 @@ classes: wide
 ## 🌐💡 VSCode Online: Your Cloud Playground
 
 Welcome to your cloud-powered dev playground!  
-Let’s get you connected, coding, and exploring MongoDB in style.
+Let's get you connected, coding, and exploring MongoDB in style.
 
-**We’re here to _vibe code_ this experience together—let’s make it unforgettable! 🚀🎶**
+**We're here to _vibe code_ this experience together—let's make it unforgettable! 🚀🎶**
 
 ---
+
+{% assign step = 2 %}
 
 ## 🚀 Step 1: Backend Setup
 
 1. **Access VSCode Online:**
-   - Navigate to the Arena Portal and verify your name appears in the participant list. If it’s not there, complete the "New to Arena?" form.
+   - Navigate to the Arena Portal and verify your name appears in the participant list. If it's not there, complete the "New to Arena?" form.
    - Open the `Workspace`
      ![Folder View](../../assets/images/environment-homepage.png)  
 2. **Trust the Workspace:**
@@ -36,7 +38,7 @@ Let’s get you connected, coding, and exploring MongoDB in style.
      ```bash
      npm start
      ```
-   - ✅ **Check:** If you see a MongoDB connection message in the logs, you’re good to go!
+   - ✅ **Check:** If you see a MongoDB connection message in the logs, you're good to go!
 
 ---
 
@@ -46,7 +48,7 @@ Let’s get you connected, coding, and exploring MongoDB in style.
    - Navigate to the Arena Portal and open the `App`
 
 2. **Validate the Frontend:**    
-   - See your name on the homepage? ✅ You’re in!
+   - See your name on the homepage? ✅ You're in!
    ![Frontend Name Display](../../assets/images/environment-working.png)
 
    - If you see the error message instead of your name, double-check that your backend server is running.
@@ -55,7 +57,10 @@ Let’s get you connected, coding, and exploring MongoDB in style.
 
 ---
 
-## 🔗 Step 3: Connect the MongoDB Extension
+{% unless site.data.extensions.mongodb_autoconfigured %}
+{% assign step = step | plus: 1 %}
+
+## 🔗 Step {{ step }}: Connect the MongoDB Extension
 
 1. **Check for Your Connection First:**
    - Click the **MongoDB extension** in the sidebar.
@@ -78,9 +83,13 @@ Let’s get you connected, coding, and exploring MongoDB in style.
    - **Paste** your copied URI and connect!
 
 4. **Success Check:**
-   - If you see your databases, you’re ready to roll!
+   - If you see your databases, you're ready to roll!
 
-## 🔗 Step 4: Use MongoDB Playground
+{% endunless %}
+
+{% assign step = step | plus: 1 %}
+
+## 🔗 Step {{ step }}: Use MongoDB Playground
 
 1. **Open the MongoDB Playground:**  
    - In VSCode Online, locate and open the file `find-playground.mongodb.js` (usually found in the bottom left of the Explorer).
@@ -90,10 +99,13 @@ Let’s get you connected, coding, and exploring MongoDB in style.
    - Click the **Play** ▶️ button at the top right of the editor to execute the playground script.
 
 3. **Check the Results:**  
-   - If your query runs successfully and returns data from your database, you’re all set!
+   - If your query runs successfully and returns data from your database, you're all set!
    - If you see errors, double-check your database name and connection.
 
-## 🤖 Step 5: Supercharge VSCode with Cline
+{% unless site.data.extensions.cline_autoconfigured %}
+{% assign step = step | plus: 1 %}
+
+## 🤖 Step {{ step }}: Supercharge VSCode with Cline
 
 1. **Launch Cline:**  
    - Click the **Cline** icon in the VSCode toolbar to open the extension.
@@ -113,6 +125,8 @@ Let’s get you connected, coding, and exploring MongoDB in style.
      ![cline-working](../../assets/images/cline-working.png)
 
 **Tip:**  
-If you don’t get a response, double-check your API settings or ask your SA for help!
+If you don't get a response, double-check your API settings or ask your SA for help!
+
+{% endunless %}
 
 {% include simple_next_nav.html %}

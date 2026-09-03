@@ -8,13 +8,18 @@ classes: wide
 ## 🌐💡 VSCode Online: Your Cloud Playground
 
 Welcome to your cloud-powered dev playground!  
-Let’s get you connected, coding, and exploring MongoDB in style.
+Let's get you connected, coding, and exploring MongoDB in style.
 
-**We’re here to _vibe code_ this experience together—let’s make it unforgettable! 🚀🎶**
+**We're here to _vibe code_ this experience together—let's make it unforgettable! 🚀🎶**
 
 ---
 
-## 🔗 Step 1: Supercharge VSCode with Cline
+{% assign step = 0 %}
+
+{% unless site.data.extensions.cline_autoconfigured %}
+{% assign step = step | plus: 1 %}
+
+## 🔗 Step {{ step }}: Supercharge VSCode with Cline
 
 1. **Launch Cline:**  
    - Click the **Cline** icon in the VSCode toolbar to open the extension.
@@ -36,14 +41,20 @@ Let’s get you connected, coding, and exploring MongoDB in style.
 
 ---
 
-## 🎨 Step 2: Frontend Setup
+{% endunless %}
+
+{% assign step = step | plus: 1 %}
+
+## 🎨 Step {{ step }}: Frontend Setup
 
 1. **Launch the App:**
    - Navigate to the Arena Portal and open the `App`
 
 ---
 
-## 🚀 Step 3: Backend Setup
+{% assign step = step | plus: 1 %}
+
+## 🚀 Step {{ step }}: Backend Setup
 
 1. **Access VSCode Online:**
 > **Note:** You can use the default customer page to access your workspace
@@ -66,7 +77,10 @@ Let’s get you connected, coding, and exploring MongoDB in style.
 
 ---
 
-## 🔗 Step 4: Connect the MongoDB Extension (Optional)
+{% unless site.data.extensions.mongodb_autoconfigured %}
+{% assign step = step | plus: 1 %}
+
+## 🔗 Step {{ step }}: Connect the MongoDB Extension
 
 > **Already there?** If **CONNECTIONS** in the MongoDB extension already lists **MongoDB Arena - your-username**, it was set up for you — just click it to connect and skip this step.
 
@@ -82,8 +96,9 @@ Let’s get you connected, coding, and exploring MongoDB in style.
    - Paste your URI and connect!
 
 3. **Success Check:**
-   - If you see your databases, you’re ready to roll!
+   - If you see your databases, you're ready to roll!
 
+{% endunless %}
 
 ---
 
@@ -97,5 +112,5 @@ Let’s get you connected, coding, and exploring MongoDB in style.
 
 ---
 
-✨ That’s it! You’re set to code, create, and explore.  
+✨ That's it! You're set to code, create, and explore.  
 Happy hacking!

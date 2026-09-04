@@ -135,7 +135,12 @@ export default function Home() {
 
         {/* Main Content Layout */}
         <div className="space-y-8">
-          {/* Top Row: Form (left) and Active Count (right) */}
+          {/* Three Steps Section - Full Width */}
+          <div className="w-full">
+            <ThreeStepsSection />
+          </div>
+
+          {/* Join Row: Form (left) and Active Count (right) */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* New to Arena Form - Takes 3/4 width */}
             <div className="lg:col-span-3">
@@ -149,7 +154,7 @@ export default function Home() {
                       Access to the form has been temporarily disabled due to too many requests. Please try again later.
                     </p>
                   </div>
-                  
+
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div>
                       <div className="flex gap-2">
@@ -170,7 +175,7 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
-                    
+
                     {passwordError && (
                       <div className="text-red-400 text-sm">
                         {passwordError}
@@ -186,16 +191,11 @@ export default function Home() {
                 />
               )}
             </div>
-            
+
             {/* Active Participants Count - Takes 1/4 width */}
             <div className="lg:col-span-1">
               <AvailableCount refreshTrigger={refreshKey} />
             </div>
-          </div>
-
-          {/* Three Steps Section - Full Width */}
-          <div className="w-full">
-            <ThreeStepsSection />
           </div>
 
           {/* Leaderboard Section - Full Width */}

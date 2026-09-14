@@ -35,7 +35,7 @@ resource "helm_release" "litellm" {
   name       = "litellm"
   chart      = "./litellm"
   namespace  = "default"
-  version    = "0.1.15"
+  version    = "0.1.16"
   
   wait          = true
   wait_for_jobs = true
@@ -60,22 +60,23 @@ resource "helm_release" "litellm" {
         } : {})
         
         secrets = {
-          azureOpenaiApiKey = coalesce(
-            var.azure_openai_api_key,
-            try(local.arena_secrets.azure_openai_api_key, null)
+          groveApiKey = coalesce(
+            var.grove_api_key,
+            try(local.arena_secrets.grove_api_key, null)
           )
         }
       }, {
         config = {
           model_list = [
             {
-              model_name = "gpt-5-mini"
+              model_name = "gpt-5.4-mini"
               litellm_params = {
-                model = "azure/gpt-5-mini"
-                api_key = "os.environ/AZURE_OPENAI_API_KEY"
-                api_base = "https://solutionsconsultingopenai.openai.azure.com"
-                api_version = "2025-04-01-preview"
-                base_model = "gpt-5-mini"
+                model = "openai/gpt-5.4-mini"
+                api_key = "os.environ/GROVE_API_KEY"
+                api_base = "https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1"
+                extra_headers = {
+                  "api-key" = "os.environ/GROVE_API_KEY"
+                }
                 max_tokens = 4096
                 temperature = 0.7
                 cache_control_injection_points = [
@@ -89,11 +90,12 @@ resource "helm_release" "litellm" {
             {
               model_name = "gpt-5-chat"
               litellm_params = {
-                model = "azure/gpt-5-chat"
-                api_key = "os.environ/AZURE_OPENAI_API_KEY"
-                api_base = "https://solutionsconsultingopenai.openai.azure.com"
-                api_version = "2025-04-01-preview"
-                base_model = "gpt-5"
+                model = "openai/gpt-5.4-nano"
+                api_key = "os.environ/GROVE_API_KEY"
+                api_base = "https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1"
+                extra_headers = {
+                  "api-key" = "os.environ/GROVE_API_KEY"
+                }
                 max_tokens = 4096
                 temperature = 0.7
                 cache_control_injection_points = [

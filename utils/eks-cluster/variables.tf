@@ -85,8 +85,8 @@ variable "anthropic_api_key" {
   default     = null
 }
 
-variable "azure_openai_api_key" {
-  description = "Azure OpenAI API key for LiteLLM (optional - will fallback to AWS Secrets Manager if null)"
+variable "grove_api_key" {
+  description = "Grove API key for LiteLLM (optional - will fallback to AWS Secrets Manager if null)"
   type        = string
   sensitive   = true
   default     = null

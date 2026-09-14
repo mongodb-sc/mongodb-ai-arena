@@ -183,7 +183,7 @@ Defines all input variables with validation:
 - `atlas_user_password` - Shared password for participants
 - `atlas_admin_user` / `atlas_admin_password` - Admin credentials
 - `scenario_config` - Complete workshop configuration from config.yaml
-- `anthropic_api_key` / `azure_openai_api_key` - LLM API keys (optional)
+- `anthropic_api_key` / `grove_api_key` - LLM API keys (optional)
 
 ### Network & Compute Files
 
@@ -466,15 +466,15 @@ Each application component is deployed from its own folder containing a complete
 
 **API Key Management**:
 - **Primary Source**: AWS Secrets Manager (`arena/secrets`)
-- **Fallback**: Terraform variables (`anthropic_api_key`, `azure_openai_api_key`)
+- **Fallback**: Terraform variables (`anthropic_api_key`, `grove_api_key`)
 - **Security**: Stored as Kubernetes secrets, mounted as env vars
 
 **Model Configuration**:
 - **If OpenAI Provider**:
-  - `gpt-5-mini` - Azure OpenAI endpoint
-  - `gpt-5-chat` - Azure OpenAI endpoint
-  - API base: `https://solutionsconsultingopenai.openai.azure.com`
-  - API version: 2025-04-01-preview
+  - `gpt-5.4-mini` - Grove gateway
+  - `gpt-5-chat` - Grove gateway (`gpt-5.4-nano`)
+  - API base: `https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1`
+  - Auth: `api-key` header (`GROVE_API_KEY`)
 - **If Anthropic Provider**:
   - `claude-3-haiku` - Anthropic API
   - `claude-4-sonnet` - Anthropic API

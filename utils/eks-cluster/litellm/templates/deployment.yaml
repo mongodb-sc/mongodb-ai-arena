@@ -54,12 +54,12 @@ spec:
                   name: {{ include "litellm.fullname" . }}-secrets
                   key: anthropic-api-key
             {{- end }}
-            {{- if .Values.litellm.secrets.azureOpenaiApiKey }}
-            - name: AZURE_OPENAI_API_KEY
+            {{- if .Values.litellm.secrets.groveApiKey }}
+            - name: GROVE_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "litellm.fullname" . }}-secrets
-                  key: azure-openai-api-key
+                  key: grove-api-key
             {{- end }}
           args:
             - "--config"

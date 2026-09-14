@@ -95,7 +95,7 @@ litellm:
   # API keys - these should be provided as secrets externally
   secrets:
     anthropicApiKey: ""
-    azureOpenaiApiKey: ""
+    groveApiKey: ""
   
   # LiteLLM configuration
   config:

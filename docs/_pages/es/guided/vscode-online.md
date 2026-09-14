@@ -104,7 +104,7 @@ Conéctate, codifica y explora MongoDB con estilo.
    - Ingresa las siguientes configuraciones de LiteLLM:
      - **Base URL:** `http://litellm-service:4000`
      - **API Key:** `noop`
-     - **Model:** `gpt-5-mini`
+     - **Model:** `gpt-5.4-mini`
    - Haz clic en **Let's go!**  
      ![cline-welcome](../../../assets/images/cline-welcome.png)
 

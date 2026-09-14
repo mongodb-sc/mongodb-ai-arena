@@ -75,7 +75,7 @@ scenario:
     preconfigure: true
     base_url: "http://litellm-service:4000"
     api_key: "noop"
-    model: "gpt-5-mini"
+    model: "gpt-5.4-mini"
   leaderboard:
     type: "timed"
     # close_on: "2025-11-04T16:03:00.000Z"  # Optional: ISO 8601 date when leaderboard freezes (UTC)

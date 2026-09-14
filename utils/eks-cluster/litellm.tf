@@ -78,7 +78,6 @@ resource "helm_release" "litellm" {
                   "api-key" = "os.environ/GROVE_API_KEY"
                 }
                 max_tokens = 4096
-                temperature = 0.7
                 cache_control_injection_points = [
                   {
                     location = "message"
@@ -97,7 +96,6 @@ resource "helm_release" "litellm" {
                   "api-key" = "os.environ/GROVE_API_KEY"
                 }
                 max_tokens = 4096
-                temperature = 0.7
                 cache_control_injection_points = [
                   {
                     location = "message"

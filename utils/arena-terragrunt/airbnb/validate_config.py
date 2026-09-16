@@ -55,10 +55,10 @@ def validate_config(config_path):
             'defaults': {}
         },
         'mongodb': {
-            'required': ['public_key', 'private_key', 'project_name', 'cluster_name', 'cluster_region'],
+            # Credentials are checked further down: Atlas takes either a
+            # Programmatic API Key pair or a Service Account pair.
+            'required': ['project_name', 'cluster_name', 'cluster_region'],
             'defaults': {
-                'public_key': ['PUBLIC_KEY', 'public_key'],
-                'private_key': ['PRIVATE_KEY', 'private_key'],
                 'project_name': ['PROJECT_NAME', 'arena-customer'],
                 'cluster_name': ['arena-cluster'],
                 'database_admin_password': ['MongoArenaAdminDummy', 'Mongo123/Admin'],
@@ -130,6 +130,52 @@ def validate_config(config_path):
     # Additional MongoDB-specific validations
     if 'mongodb' in config:
         mongodb = config['mongodb']
+
+        # Atlas authenticates either with a Programmatic API Key
+        # (public_key/private_key) or with a Service Account
+        # (client_id/client_secret, values prefixed 'mdb_sa'). Exactly one
+        # complete pair is needed; leftover placeholders count as unset.
+        placeholders = {'PUBLIC_KEY', 'public_key', 'PRIVATE_KEY', 'private_key',
+                        'CLIENT_ID', 'client_id', 'CLIENT_SECRET', 'client_secret'}
+
+        def credential(field):
+            value = mongodb.get(field)
+            return '' if value is None or value in placeholders else str(value)
+
+        credential_styles = {
+            'Programmatic API Key': ('public_key', 'private_key'),
+            'Service Account': ('client_id', 'client_secret'),
+        }
+
+        complete = []
+        partial = []
+        for style, (id_field, secret_field) in credential_styles.items():
+            if credential(id_field) and credential(secret_field):
+                complete.append(style)
+            elif credential(id_field) or credential(secret_field):
+                partial.append(style)
+                errors.append(
+                    f"{style} credentials are incomplete - set both "
+                    f"'mongodb.{id_field}' and 'mongodb.{secret_field}'"
+                )
+
+        if not complete and not partial:
+            errors.append(
+                "Missing MongoDB Atlas credentials - set either 'mongodb.public_key' + "
+                "'mongodb.private_key' (Programmatic API Key) or 'mongodb.client_id' + "
+                "'mongodb.client_secret' (Service Account)"
+            )
+        elif len(complete) > 1:
+            warnings.append(
+                "Both Programmatic API Key and Service Account credentials are set - "
+                "the Service Account pair will be used"
+            )
+
+        if credential('public_key').startswith('mdb_sa'):
+            warnings.append(
+                "mongodb.public_key holds Service Account credentials ('mdb_sa...') - "
+                "they still work, but belong in mongodb.client_id / mongodb.client_secret"
+            )
 
         # Check instance size is valid
         if 'instance_size' in mongodb:

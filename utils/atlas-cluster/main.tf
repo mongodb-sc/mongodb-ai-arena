@@ -13,9 +13,31 @@ terraform {
   }
 }
 
+locals {
+  atlas_service_account_prefix = "mdb_sa"
+
+  # Atlas authenticates either with a Programmatic API Key (public/private key,
+  # digest auth) or with a Service Account (client id/secret, OAuth2). Service
+  # Account values are recognisable by their "mdb_sa" prefix, so credentials
+  # left in public_key/private_key still work - the provider itself rejects
+  # them there.
+  atlas_use_service_account = var.client_id != "" || startswith(var.public_key, local.atlas_service_account_prefix)
+
+  # The credential pair actually in use, whichever style it turned out to be.
+  atlas_credential_id     = local.atlas_use_service_account && var.client_id != "" ? var.client_id : var.public_key
+  atlas_credential_secret = local.atlas_use_service_account && var.client_secret != "" ? var.client_secret : var.private_key
+
+  # Terraform silences a provisioner's whole output stream when its
+  # configuration references a sensitive value, which would hide the progress
+  # logs of the scripts below. The secret is never echoed by those scripts.
+  atlas_credential_secret_for_scripts = nonsensitive(local.atlas_credential_secret)
+}
+
 provider "mongodbatlas" {
-  public_key  = var.public_key
-  private_key = var.private_key
+  public_key    = local.atlas_use_service_account ? null : local.atlas_credential_id
+  private_key   = local.atlas_use_service_account ? null : local.atlas_credential_secret
+  client_id     = local.atlas_use_service_account ? local.atlas_credential_id : null
+  client_secret = local.atlas_use_service_account ? local.atlas_credential_secret : null
 }
 
 data "mongodbatlas_roles_org_id" "org" {}
@@ -207,18 +229,10 @@ resource "null_resource" "raise_database_users_limit" {
 
   provisioner "local-exec" {
     environment = {
-      ATLAS_PUBLIC_KEY  = var.public_key
-      ATLAS_PRIVATE_KEY = var.private_key
+      ATLAS_CREDENTIAL_ID     = local.atlas_credential_id
+      ATLAS_CREDENTIAL_SECRET = local.atlas_credential_secret_for_scripts
     }
-    command = <<-EOT
-      curl --silent --show-error --fail \
-        --user "$ATLAS_PUBLIC_KEY:$ATLAS_PRIVATE_KEY" --digest \
-        --request PATCH \
-        --header "Accept: application/vnd.atlas.2023-01-01+json" \
-        --header "Content-Type: application/json" \
-        --data '{"value": ${local.required_user_limit}}' \
-        "https://cloud.mongodb.com/api/atlas/v2/groups/${local.project_id}/limits/atlas.project.security.databaseAccess.users"
-    EOT
+    command = "python3 ${path.module}/raise_user_limit.py \"${local.project_id}\" \"${local.required_user_limit}\""
   }
 }
 
@@ -397,7 +411,7 @@ locals {
 # Define another null resource to execute the Python script
 resource "null_resource" "run_script" {
   provisioner "local-exec" {
-    command = "python3 ${path.module}/populate_database_airnbnb.py \"${local.mongodb_atlas_connection_string}\" \"${var.sample_database_name}\" \"${var.public_key}\" \"${var.private_key}\" \"${local.project_id}\" \"${var.cluster_name}\" \"${var.user_list_path != null ? var.user_list_path : "null"}\" \"${var.common_database_name}\" \"${var.additional_users_count}\" \"${var.create_indexes}\" \"${var.user_start_index}\" 2>&1"
+    command = "python3 ${path.module}/populate_database_airnbnb.py \"${local.mongodb_atlas_connection_string}\" \"${var.sample_database_name}\" \"${local.atlas_credential_id}\" \"${local.atlas_credential_secret_for_scripts}\" \"${local.project_id}\" \"${var.cluster_name}\" \"${var.user_list_path != null ? var.user_list_path : "null"}\" \"${var.common_database_name}\" \"${var.additional_users_count}\" \"${var.create_indexes}\" \"${var.user_start_index}\" 2>&1"
   }
 
   triggers = {

@@ -111,6 +111,51 @@ The `mdb-nginx` pod can occasionally get stuck serving stale configuration or en
 
 ---
 
+### 3. Atlas Credentials Rejected - Error Getting Credentials for Provider
+
+**Error Message:**
+```
+│ Error: Error getting credentials for provider
+│ 
+│   with provider["registry.terraform.io/mongodb/mongodbatlas"],
+│   on main.tf line 16, in provider "mongodbatlas":
+│   16: provider "mongodbatlas" {
+│ 
+│ Service Account credentials (starting with 'mdb_sa') were provided in
+│ public_key/private_key which are meant for Programmatic Access Keys. Please
+│ use client_id and client_secret arguments for Service Account
+│ authentication
+```
+
+**Cause:**
+Atlas has two kinds of credentials, and each has its own pair of fields in `config.yaml`:
+
+- **Programmatic API Key** → `mongodb.public_key` + `mongodb.private_key`
+- **Service Account** (values starting with `mdb_sa_id_` / `mdb_sa_sk_`) → `mongodb.client_id` + `mongodb.client_secret`
+
+This error means Service Account values ended up in the API key fields. The Atlas provider rejects that combination outright.
+
+**Solution:**
+
+1. **Move the credentials into the matching fields** in your customer's `config.yaml`:
+   ```yaml
+   mongodb:
+     client_id: "mdb_sa_id_..."
+     client_secret: "mdb_sa_sk_..."
+   ```
+   Remove (or comment out) `public_key` and `private_key` so only one pair is set.
+
+2. **Re-run the apply:**
+   ```bash
+   terragrunt apply --all
+   ```
+
+> 💡 **Note:** Current versions of the module detect `mdb_sa_...` values wherever they are and authenticate correctly, so this error usually means the checkout predates that support. Keeping each credential type in its own pair works on every version.
+
+**Related error:** if the two fields hold credentials of *different* types (for example an API key public key with a Service Account secret), Atlas returns an authentication failure instead. Make sure both values come from the same credential.
+
+---
+
 ## Getting Help
 
 If you encounter an error not listed here, please:

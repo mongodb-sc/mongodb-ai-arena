@@ -48,8 +48,18 @@ Open `config.yaml` in your customer folder and update these **required** values:
 - **`domain.email`**: Do not change the email address. Keep it as `"arena@mongodb.com"`.
 
 ### MongoDB Atlas (Required)
-- **`mongodb.public_key`**: Replace `"PUBLIC_KEY"` with your MongoDB Atlas public API key.
-- **`mongodb.private_key`**: Replace `"PRIVATE_KEY"` with your MongoDB Atlas private API key (requires `Organization Project Creator` privileges).
+
+**Atlas credentials** — Atlas has two kinds of credentials and the deployment accepts either one. Fill in **one** pair and leave the other one out (the template `config.yaml` ships the API key pair active and the Service Account pair commented out):
+
+| Credential type | Fields to set | Values look like |
+|---|---|---|
+| Programmatic API Key | `mongodb.public_key` + `mongodb.private_key` | `abcdefgh` / `1a2b3c4d-...` |
+| Service Account | `mongodb.client_id` + `mongodb.client_secret` | `mdb_sa_id_...` / `mdb_sa_sk_...` |
+
+Create either one from **Atlas → Organization → Access Manager**. Whichever you pick needs `Organization Project Creator` privileges.
+
+> 💡 **Note:** Service Account values (`mdb_sa_...`) belong in `client_id`/`client_secret`. If you paste them into `public_key`/`private_key` the deployment still recognises them and authenticates correctly, but the validator will warn you to move them.
+
 - **`mongodb.project_name`**: Replace `"PROJECT_NAME"` with your desired Atlas project name.
 - **`mongodb.cluster_name`**: Modify if needed (default: `"arena-cluster"`).
   - **💡 Best Practice:** Use the naming convention `arena-cluster-<customer-name>` (e.g., `"arena-cluster-acme-corp"`).

@@ -6,8 +6,9 @@ terraform {
       version = "~> 6.0"
     }
     mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      source = "mongodb/mongodbatlas"
+      # 2.12 is the floor for Service Account (client_id/client_secret) auth.
+      version = "~> 2.12"
     }
     acme = {
       source  = "vancluever/acme"
@@ -41,9 +42,22 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+locals {
+  # Atlas authenticates either with a Programmatic API Key (public/private key)
+  # or with a Service Account (client id/secret, values prefixed "mdb_sa").
+  # Service Account values left in the public/private key inputs are picked up
+  # too, since the provider rejects them there.
+  atlas_use_service_account = var.atlas_client_id != "" || startswith(var.atlas_public_key, "mdb_sa")
+
+  atlas_credential_id     = local.atlas_use_service_account && var.atlas_client_id != "" ? var.atlas_client_id : var.atlas_public_key
+  atlas_credential_secret = local.atlas_use_service_account && var.atlas_client_secret != "" ? var.atlas_client_secret : var.atlas_private_key
+}
+
 provider "mongodbatlas" {
-  public_key  = var.atlas_public_key
-  private_key = var.atlas_private_key
+  public_key    = local.atlas_use_service_account ? null : local.atlas_credential_id
+  private_key   = local.atlas_use_service_account ? null : local.atlas_credential_secret
+  client_id     = local.atlas_use_service_account ? local.atlas_credential_id : null
+  client_secret = local.atlas_use_service_account ? local.atlas_credential_secret : null
 }
 
 locals {

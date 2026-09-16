@@ -1,22 +1,54 @@
+# Atlas accepts two kinds of credentials. Supply exactly one pair: either
+# public_key/private_key (Programmatic API Key) or client_id/client_secret
+# (Service Account, values prefixed with "mdb_sa").
 variable "public_key" {
-  description = "The public API key for MongoDB Atlas"
+  description = "The public API key for MongoDB Atlas (Programmatic API Key authentication)"
   type        = string
-  default     = "public_key"
+  default     = ""
 
   validation {
-    condition     = var.public_key != "public_key" && var.public_key != "PUBLIC_KEY" && length(var.public_key) > 0
+    condition     = !contains(["public_key", "PUBLIC_KEY"], var.public_key)
     error_message = "❌ MongoDB Atlas public_key must be set in config.yaml. Replace 'PUBLIC_KEY' with your actual Atlas public API key."
   }
 }
 
 variable "private_key" {
-  description = "The private API key for MongoDB Atlas"
+  description = "The private API key for MongoDB Atlas (Programmatic API Key authentication)"
   type        = string
-  default     = "private_key"
+  default     = ""
+  sensitive   = true
 
   validation {
-    condition     = var.private_key != "private_key" && var.private_key != "PRIVATE_KEY" && length(var.private_key) > 0
+    condition     = !contains(["private_key", "PRIVATE_KEY"], var.private_key)
     error_message = "❌ MongoDB Atlas private_key must be set in config.yaml. Replace 'PRIVATE_KEY' with your actual Atlas private API key."
+  }
+}
+
+variable "client_id" {
+  description = "The Service Account client id for MongoDB Atlas (starts with 'mdb_sa_id_')"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !contains(["client_id", "CLIENT_ID"], var.client_id)
+    error_message = "❌ MongoDB Atlas client_id must be set in config.yaml. Replace 'CLIENT_ID' with your actual Atlas Service Account client id."
+  }
+
+  validation {
+    condition     = (var.public_key != "" && var.private_key != "") || (var.client_id != "" && var.client_secret != "")
+    error_message = "❌ MongoDB Atlas credentials are incomplete in config.yaml. Set either mongodb.public_key + mongodb.private_key (Programmatic API Key) or mongodb.client_id + mongodb.client_secret (Service Account)."
+  }
+}
+
+variable "client_secret" {
+  description = "The Service Account client secret for MongoDB Atlas (starts with 'mdb_sa_sk_')"
+  type        = string
+  default     = ""
+  sensitive   = true
+
+  validation {
+    condition     = !contains(["client_secret", "CLIENT_SECRET"], var.client_secret)
+    error_message = "❌ MongoDB Atlas client_secret must be set in config.yaml. Replace 'CLIENT_SECRET' with your actual Atlas Service Account client secret."
   }
 }
 

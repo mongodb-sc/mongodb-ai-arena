@@ -53,8 +53,12 @@ inputs = merge(local.vpc_cidr_input, {
   atlas_project_id   = dependency.atlas.outputs.project_id
   atlas_cluster_name = local.config.mongodb.cluster_name
 
-  atlas_public_key  = local.config.mongodb.public_key
-  atlas_private_key = local.config.mongodb.private_key
+  # Atlas takes either a Programmatic API Key pair or a Service Account pair,
+  # so config.yaml only has to define the one it uses.
+  atlas_public_key    = try(local.config.mongodb.public_key, "")
+  atlas_private_key   = try(local.config.mongodb.private_key, "")
+  atlas_client_id     = try(local.config.mongodb.client_id, "")
+  atlas_client_secret = try(local.config.mongodb.client_secret, "")
 
   customer_name = local.config.customer.name
   domain_email = local.config.domain.email

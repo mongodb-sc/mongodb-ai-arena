@@ -9,6 +9,25 @@ classes: wide
 
 The `atlas-cluster` module uses Terraform to automate the complete deployment and configuration of your MongoDB Atlas infrastructure for the workshop environment.
 
+## 🔐 Atlas Authentication
+
+The module works with either of the two credential types Atlas supports and picks the matching authentication scheme automatically:
+
+| Credential type | `config.yaml` fields | Authentication used |
+|---|---|---|
+| Programmatic API Key | `mongodb.public_key` / `mongodb.private_key` | HTTP digest |
+| Service Account (`mdb_sa_...`) | `mongodb.client_id` / `mongodb.client_secret` | OAuth2 client credentials (short-lived bearer token) |
+
+Set exactly one pair — `validate_config.py` fails the run before Terraform starts if a pair is incomplete or if both are missing. Service Account values are recognised by their `mdb_sa` prefix, so credentials left in `public_key`/`private_key` still authenticate, even though the Atlas provider rejects that combination on its own.
+
+The detection is shared by everything that talks to Atlas:
+
+- the `mongodbatlas` provider in `main.tf`, which receives either `public_key`/`private_key` or `client_id`/`client_secret`
+- `raise_user_limit.py`, which raises the project's database user limit on shared projects
+- `populate_database_airnbnb.py`, which loads the sample dataset through the Atlas Admin API
+
+`atlas_auth.py` holds that shared logic: it exchanges Service Account credentials for a bearer token and refreshes it as needed, or falls back to digest authentication for a Programmatic API Key. It uses only the Python standard library, so it also works in provisioners that run before `requirements.txt` is installed.
+
 ## 🔧 How Terraform Automates the Deployment
 
 The Terraform code in this module automates everything from cluster creation to user provisioning. Here's what happens when you run `terragrunt apply`:
@@ -108,10 +127,12 @@ This comprehensive Python script orchestrates the complete database setup after 
 
 **Script Arguments:**
 ```bash
-populate_database_airnbnb.py <connection_string> <database_name> <public_key> 
-  <private_key> <project_id> <cluster_name> <csv_file> <common_database> 
+populate_database_airnbnb.py <connection_string> <database_name> <credential_id> 
+  <credential_secret> <project_id> <cluster_name> <csv_file> <common_database> 
   <additional_users_count> <create_indexes> <user_start_index>
 ```
+
+`<credential_id>`/`<credential_secret>` is whichever Atlas pair `config.yaml` defines — an API key public/private key or a Service Account client id/secret. Terraform passes the pair in use and the script detects the type.
 
 **Execution Flow:**
 
@@ -292,6 +313,8 @@ The Atlas cluster deployment consists of two parts:
 atlas-cluster/
 ├── main.tf                          # Core Terraform resources
 ├── variables.tf                     # Input variables
+├── atlas_auth.py                    # Atlas Admin API auth (API key or Service Account)
+├── raise_user_limit.py              # Raises the project database user limit
 ├── parse_users.py                   # User list processor
 ├── populate_database_airnbnb.py     # Database setup automation
 ├── requirements.txt                 # Python dependencies
@@ -326,8 +349,12 @@ All configuration is centralized in `config.yaml` at the customer folder level:
 
 ```yaml
 mongodb:
+  # Programmatic API Key...
   public_key: "YOUR_PUBLIC_KEY"
   private_key: "YOUR_PRIVATE_KEY"
+  # ...or Service Account (use one pair, not both)
+  # client_id: "mdb_sa_id_..."
+  # client_secret: "mdb_sa_sk_..."
   project_name: "workshop-project"
   cluster_name: "arena-cluster"
   cluster_region: "US_EAST_2"
@@ -370,7 +397,7 @@ Each user will receive:
 ## 💡 Tips & Best Practices
 
 ### Before Deployment
-1. Verify your Atlas API keys have `Organization Project Creator` permissions
+1. Verify your Atlas credentials (Programmatic API Key or Service Account) have `Organization Project Creator` permissions
 2. Review and update `user_list.csv` with actual participant emails
 3. Choose appropriate cluster size based on expected load
 

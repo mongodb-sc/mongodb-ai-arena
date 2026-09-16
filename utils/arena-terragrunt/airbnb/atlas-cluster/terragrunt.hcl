@@ -13,8 +13,12 @@ locals {
 }
 
 inputs = {
-    public_key                              = local.config.mongodb.public_key
-    private_key                             = local.config.mongodb.private_key
+    # Atlas takes either a Programmatic API Key pair or a Service Account pair,
+    # so config.yaml only has to define the one it uses.
+    public_key                              = try(local.config.mongodb.public_key, "")
+    private_key                             = try(local.config.mongodb.private_key, "")
+    client_id                               = try(local.config.mongodb.client_id, "")
+    client_secret                           = try(local.config.mongodb.client_secret, "")
     project_name                            = local.config.mongodb.project_name
     cluster_name                            = local.config.mongodb.cluster_name
     cluster_region                          = local.config.mongodb.cluster_region

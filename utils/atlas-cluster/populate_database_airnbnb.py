@@ -1,12 +1,11 @@
 import sys
 import time
-import requests
-from requests.auth import HTTPDigestAuth
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.operations import SearchIndexModel
 from pymongo.errors import OperationFailure
 import certifi
+from atlas_auth import AtlasApi, describe_credentials
 from parse_users import get_all_users
 from datetime import datetime, timezone
 import json
@@ -43,14 +42,16 @@ def retry_on_writes_blocked(operation, description):
 
 def get_params():
     if len(sys.argv) != 12:
-        print("Usage: python3 populate_database_airnbnb.py MONGO_CONNECTION_STRING MONGO_DATABASE_NAME PUBLIC_KEY PRIVATE_KEY PROJECT_ID CLUSTER_NAME CSV_FILE COMMON_DATABASE ADDITIONAL_USERS_COUNT CREATE_INDEXES USER_START_INDEX", file=sys.stderr)
+        print("Usage: python3 populate_database_airnbnb.py MONGO_CONNECTION_STRING MONGO_DATABASE_NAME ATLAS_CREDENTIAL_ID ATLAS_CREDENTIAL_SECRET PROJECT_ID CLUSTER_NAME CSV_FILE COMMON_DATABASE ADDITIONAL_USERS_COUNT CREATE_INDEXES USER_START_INDEX", file=sys.stderr)
         sys.exit(1)
     
     return {
         'MONGO_CONNECTION_STRING': sys.argv[1],
         'MONGO_DATABASE_NAME': sys.argv[2],
-        'PUBLIC_KEY': sys.argv[3],
-        'PRIVATE_KEY': sys.argv[4],
+        # Either an API key public/private pair or a Service Account client
+        # id/secret; atlas_auth picks the matching authentication scheme.
+        'ATLAS_CREDENTIAL_ID': sys.argv[3],
+        'ATLAS_CREDENTIAL_SECRET': sys.argv[4],
         'PROJECT_ID': sys.argv[5],
         'CLUSTER_NAME': sys.argv[6],
         'CSV_FILE': sys.argv[7],
@@ -71,25 +72,26 @@ def get_client(params):
         sys.exit(1)
 
 def load_sample_dataset(params):
-    atlas_auth = HTTPDigestAuth(params['PUBLIC_KEY'], params['PRIVATE_KEY'])
-    atlas_v2_headers = {
-        "Accept": "application/vnd.atlas.2023-02-01+json",
-        "Content-Type": "application/json"
-    }
-    load_url = f'https://cloud.mongodb.com/api/atlas/v2/groups/{params["PROJECT_ID"]}/sampleDatasetLoad/{params["CLUSTER_NAME"]}'
-    response = requests.post(load_url, headers=atlas_v2_headers, auth=atlas_auth)
+    api = AtlasApi(
+        params['ATLAS_CREDENTIAL_ID'],
+        params['ATLAS_CREDENTIAL_SECRET'],
+        api_version='2023-02-01'
+    )
+    print(f"Calling the Atlas Admin API with {describe_credentials(api.credential_id)} credentials.", flush=True)
+    load_url = f'/api/atlas/v2/groups/{params["PROJECT_ID"]}/sampleDatasetLoad/{params["CLUSTER_NAME"]}'
+    response = api.post(load_url)
     if response.status_code == 201:
         print('Sample data loading initiated...', flush=True)
         dataset_id = response.json().get('_id')
-        wait_for_loading(atlas_auth, atlas_v2_headers, dataset_id, params)
+        wait_for_loading(api, dataset_id, params)
     else:
         handle_error(response)
 
-def wait_for_loading(auth, headers, dataset_id, params):
+def wait_for_loading(api, dataset_id, params):
     loading = True
     while loading:
-        status_url = f'https://cloud.mongodb.com/api/atlas/v2/groups/{params["PROJECT_ID"]}/sampleDatasetLoad/{dataset_id}'
-        loaded_response = requests.get(status_url, headers=headers, auth=auth)
+        status_url = f'/api/atlas/v2/groups/{params["PROJECT_ID"]}/sampleDatasetLoad/{dataset_id}'
+        loaded_response = api.get(status_url)
         if loaded_response.status_code != 200:
             handle_error(loaded_response)
         state = loaded_response.json().get('state')

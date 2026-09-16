@@ -2,8 +2,14 @@ customer:
   name: "customer"
 
 mongodb:
+  # Atlas credentials, in either of the two styles it supports. Fill in one pair
+  # and leave the other out:
+  #   - Programmatic API Key: public_key + private_key
+  #   - Service Account: client_id + client_secret ("mdb_sa_id_..." / "mdb_sa_sk_...")
   public_key: "PUBLIC_KEY"
   private_key: "PRIVATE_KEY"
+  # client_id: "CLIENT_ID"
+  # client_secret: "CLIENT_SECRET"
   project_name: "PROJECT_NAME"
   cluster_name: "arena-cluster"
   cluster_region: "US_EAST_2"

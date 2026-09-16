@@ -92,16 +92,39 @@ variable "grove_api_key" {
   default     = null
 }
 
+# Supply exactly one credential pair: the Programmatic API Key public/private
+# key, or the Service Account client id/secret.
 variable "atlas_public_key" {
-  description = "MongoDB Atlas public API key"
+  description = "MongoDB Atlas public API key (Programmatic API Key authentication)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "atlas_private_key" {
-  description = "MongoDB Atlas private API key"
+  description = "MongoDB Atlas private API key (Programmatic API Key authentication)"
   type        = string
   sensitive   = true
+  default     = ""
+}
+
+variable "atlas_client_id" {
+  description = "MongoDB Atlas Service Account client id (starts with 'mdb_sa_id_')"
+  type        = string
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = (var.atlas_public_key != "" && var.atlas_private_key != "") || (var.atlas_client_id != "" && var.atlas_client_secret != "")
+    error_message = "❌ MongoDB Atlas credentials are incomplete. Set either atlas_public_key + atlas_private_key (Programmatic API Key) or atlas_client_id + atlas_client_secret (Service Account)."
+  }
+}
+
+variable "atlas_client_secret" {
+  description = "MongoDB Atlas Service Account client secret (starts with 'mdb_sa_sk_')"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
 variable "atlas_project_id" {

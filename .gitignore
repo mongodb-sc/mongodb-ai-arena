@@ -11,6 +11,7 @@ package-lock.json
 **/results/
 **/signal/
 **/package-lock.json
+__pycache__
 
 # Env
 **/.env

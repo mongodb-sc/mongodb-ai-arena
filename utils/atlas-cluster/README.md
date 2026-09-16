@@ -39,8 +39,11 @@ Welcome to the AI Arena preparation guide! Follow these steps to ensure a smooth
 
 2. **Update the Variable File**:
    - Open your newly created `terraform.tfvars` file.
-   - Modify the file to include your specific settings, such as your MongoDB Atlas API keys.
-   - Ensure these API keys have the necessary permissions, including `Organization Project Creator`, to allow Terraform to manage your resources.
+   - Modify the file to include your specific settings, such as your MongoDB Atlas credentials.
+   - Atlas supports two credential styles and this module accepts either one; set exactly one pair:
+     - **Programmatic API Key**: `public_key` and `private_key`.
+     - **Service Account**: `client_id` and `client_secret` (the `mdb_sa_id_...` / `mdb_sa_sk_...` values).
+   - Ensure these credentials have the necessary permissions, including `Organization Project Creator`, to allow Terraform to manage your resources.
 
 3. **Modify the Main Configuration**:
    - Open the `main.tf` file, which contains the core declarations for your Terraform setup.

@@ -166,7 +166,7 @@ component-name/
 #### `main.tf` - Foundation & Providers
 The backbone of the module, configuring:
 - **Terraform Backend**: S3 backend for state management
-- **Providers**: AWS (~6.0), ACME (~2.35), PostgreSQL (~1.22), Kubernetes (~2.37), Helm (~3.0)
+- **Providers**: AWS (~6.0), MongoDB Atlas (~2.12), ACME (~2.35), PostgreSQL (~1.22), Kubernetes (~2.37), Helm (~3.0)
 - **Local Variables**: Atlas connection strings, user lists, cluster naming conventions
 - **Expiration Management**: Automatic 7-day (168h) expiration timestamp for resources
 - **Domain Configuration**: Customer-specific domain names (e.g., `customer.mongoarena.com`)
@@ -182,6 +182,7 @@ Defines all input variables with validation:
 - `atlas_user_list` - Participant usernames (validated non-empty)
 - `atlas_user_password` - Shared password for participants
 - `atlas_admin_user` / `atlas_admin_password` - Admin credentials
+- `atlas_public_key` / `atlas_private_key` **or** `atlas_client_id` / `atlas_client_secret` - Atlas credentials for the `mongodbatlas` provider (VPC peering); either a Programmatic API Key or a Service Account pair, detected the same way as in the atlas-cluster module
 - `scenario_config` - Complete workshop configuration from config.yaml
 - `anthropic_api_key` / `grove_api_key` - LLM API keys (optional)
 

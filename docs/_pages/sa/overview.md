@@ -44,7 +44,7 @@ Before you begin, you'll need to install and configure the necessary tools on yo
 Configure your workshop environment by editing a central configuration file:
 
 - **Customer Details** - Set customer name and AWS settings
-- **MongoDB Atlas** - Configure cluster settings, region, instance size, and API keys
+- **MongoDB Atlas** - Configure cluster settings, region, instance size, and credentials (Programmatic API Key or Service Account)
 - **Workshop Scenario** - Choose database options, LLM provider, and leaderboard type
 - **User Management** - Add participant emails and set passwords
 

@@ -89,6 +89,21 @@ scenario:
       enabled: true
       where: "Happy Hour"
       when: "4:30 PM"
+  # skill_badge:
+  #   enabled: true
+  #   scorpion:
+  #     api_token: "your-scorpion-jwt-token"
+  #     exam_id: "your-exam-uuid"
+  #     base_url: "https://scorpion.caveon.com"
+  #   credly:
+  #     api_token: "your-credly-api-token"
+  #     org_id: "your-credly-org-uuid"
+  #     badge_template_id: "your-credly-badge-template-uuid"
+  #     base_url: "https://api.credly.com"
+  #   bonus:
+  #     exercise_name: "skill-badge"
+  #     points: 50
+  #     max_attempts: 1
   instructions:
     base: "navigation-guided.yml"
     sections:

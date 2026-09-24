@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 
+const skillBadgeEnabled = process.env.NEXT_PUBLIC_SKILL_BADGE_ENABLED === 'true'
+const skillBadgeBonusPoints = process.env.NEXT_PUBLIC_SKILL_BADGE_BONUS_POINTS || '50'
+
 const ThreeStepsSection: React.FC = () => {
   // State for collapsible steps (default based on screen size)
   const [stepsExpanded, setStepsExpanded] = useState(false)
@@ -64,7 +67,7 @@ const ThreeStepsSection: React.FC = () => {
 
   return (
     <div className="card-arena rounded-lg shadow-lg p-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 ${skillBadgeEnabled ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-8`}>
         {/* Step 1: Read Instructions */}
         <div className="p-4 tile-arena tile-arena-hover rounded-lg border-2 flex flex-col">
           <div 
@@ -232,6 +235,56 @@ const ThreeStepsSection: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Step 4: Skill Badge (conditional) */}
+        {skillBadgeEnabled && (
+          <div className="p-4 rounded-lg border-2 flex flex-col" style={{ borderColor: 'rgba(251, 191, 36, 0.4)', background: 'rgba(251, 191, 36, 0.03)' }}>
+            <div
+              className="flex items-center justify-center mb-4 cursor-pointer"
+              onClick={toggleSteps}
+            >
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold mr-3 text-arena-dark" style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)' }}>
+                &#127941;
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Earn a Skill Badge
+              </h3>
+              <div className="ml-2 p-1 text-amber-400 hover:text-amber-300 transition-colors">
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${stepsExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Collapsible Content */}
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${stepsExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="text-center mb-4">
+                <img
+                  src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob"
+                  alt="Skill Badge"
+                  className="w-16 h-16 rounded-lg border-2 border-gray-600 mx-auto mb-2"
+                />
+                <p className="text-gray-300 text-sm">
+                  Pass the assessment to earn a verified Credly credential and <span className="text-amber-400 font-bold">+{skillBadgeBonusPoints}</span> bonus points
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center mt-auto">
+              <div className="inline-flex items-center px-4 py-2 bg-arena-teal text-gray-300 text-sm font-medium rounded-md cursor-not-allowed">
+                Find Your Name Below
+                <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

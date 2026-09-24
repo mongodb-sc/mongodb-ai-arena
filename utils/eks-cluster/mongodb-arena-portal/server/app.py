@@ -8,6 +8,7 @@ import logging
 import csv
 from io import StringIO
 import math
+import requests as http_requests
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +41,22 @@ user_details_collection = db[USER_DETAILS_COLLECTION]
 # Arena shared database for scenario_config
 arena_shared_db = client[ARENA_SHARED_DB]
 scenario_config_collection = arena_shared_db[SCENARIO_CONFIG_COLLECTION]
+
+# Skill badge configuration
+SKILL_BADGE_ENABLED = os.getenv('SKILL_BADGE_ENABLED', 'false').lower() == 'true'
+SCORPION_API_TOKEN = os.getenv('SCORPION_API_TOKEN', '')
+SCORPION_EXAM_ID = os.getenv('SCORPION_EXAM_ID', '')
+SCORPION_BASE_URL = os.getenv('SCORPION_BASE_URL', 'https://scorpion.caveon.com')
+CREDLY_API_TOKEN = os.getenv('CREDLY_API_TOKEN', '')
+CREDLY_ORG_ID = os.getenv('CREDLY_ORG_ID', '')
+CREDLY_BADGE_TEMPLATE_ID = os.getenv('CREDLY_BADGE_TEMPLATE_ID', '')
+CREDLY_BASE_URL = os.getenv('CREDLY_BASE_URL', 'https://api.credly.com')
+SKILL_BADGE_BONUS_NAME = os.getenv('SKILL_BADGE_BONUS_NAME', 'skill-badge')
+SKILL_BADGE_BONUS_POINTS = int(os.getenv('SKILL_BADGE_BONUS_POINTS', '50'))
+SKILL_BADGE_MAX_ATTEMPTS = int(os.getenv('SKILL_BADGE_MAX_ATTEMPTS', '1'))
+
+skill_badge_collection = arena_shared_db['skill_badge_deliveries']
+results_collection_shared = arena_shared_db['results']
 
 # Helper function to format milliseconds to human-readable duration
 def format_time(milliseconds):
@@ -977,13 +994,355 @@ def restore_user_databases():
             'error': str(e)
         }), 500
 
+# ===== Skill Badge Endpoints =====
+
+def _credly_auth_headers():
+    """Build Basic auth headers for Credly API (token as username, empty password)."""
+    import base64
+    credentials = base64.b64encode(f"{CREDLY_API_TOKEN}:".encode()).decode()
+    return {'Authorization': f'Basic {credentials}', 'Accept': 'application/json'}
+
+_badge_metadata_cache = {}
+
+def _fetch_badge_metadata():
+    """Fetch badge template metadata from Credly API (cached)."""
+    if _badge_metadata_cache:
+        return _badge_metadata_cache
+
+    if not CREDLY_API_TOKEN or not CREDLY_ORG_ID or not CREDLY_BADGE_TEMPLATE_ID:
+        return None
+
+    try:
+        url = f"{CREDLY_BASE_URL}/v1/organizations/{CREDLY_ORG_ID}/badge_templates/{CREDLY_BADGE_TEMPLATE_ID}"
+        resp = http_requests.get(url, headers=_credly_auth_headers(), timeout=10)
+        if resp.ok:
+            data = resp.json().get('data', resp.json())
+            _badge_metadata_cache.update({
+                'name': data.get('name', ''),
+                'description': data.get('description', ''),
+                'image_url': data.get('image_url', ''),
+                'skills': [s.get('name', '') for s in data.get('skills', [])],
+                'url': data.get('url', ''),
+            })
+            logger.info(f"Fetched Credly badge metadata: {_badge_metadata_cache.get('name')}")
+            return _badge_metadata_cache
+        else:
+            logger.warning(f"Credly badge metadata fetch failed: {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"Error fetching Credly badge metadata: {e}")
+    return None
+
+def _lookup_credly_badge(participant_email):
+    """Look up issued Credly badge for a participant by email. Returns accept_badge_url and state."""
+    if not CREDLY_API_TOKEN or not CREDLY_ORG_ID or not CREDLY_BADGE_TEMPLATE_ID or not participant_email:
+        return None
+
+    try:
+        url = (f"{CREDLY_BASE_URL}/v1/organizations/{CREDLY_ORG_ID}/badges"
+               f"?filter=badge_template_id::{CREDLY_BADGE_TEMPLATE_ID}"
+               f"|recipient_email::{participant_email}")
+        resp = http_requests.get(url, headers=_credly_auth_headers(), timeout=10)
+        if resp.ok:
+            badges = resp.json().get('data', [])
+            if badges:
+                badge = badges[0]
+                return {
+                    'credly_badge_id': badge.get('id'),
+                    'accept_badge_url': badge.get('accept_badge_url', ''),
+                    'badge_url': badge.get('badge_url', ''),
+                    'state': badge.get('state', 'unknown'),
+                    'issued_at': badge.get('issued_at'),
+                }
+        return None
+    except Exception as e:
+        logger.warning(f"Error looking up Credly badge: {e}")
+        return None
+
+@app.route('/api/skill-badge/config', methods=['GET'])
+def get_skill_badge_config():
+    """Return public skill badge configuration with Credly badge metadata."""
+    badge_meta = _fetch_badge_metadata() if SKILL_BADGE_ENABLED else None
+    return jsonify({
+        'enabled': SKILL_BADGE_ENABLED,
+        'bonus_points': SKILL_BADGE_BONUS_POINTS,
+        'max_attempts': SKILL_BADGE_MAX_ATTEMPTS,
+        'badge_template_id': CREDLY_BADGE_TEMPLATE_ID,
+        'badge': badge_meta,
+    }), 200
+
+@app.route('/api/skill-badge/start', methods=['POST'])
+def start_skill_badge():
+    """Create a Scorpion delivery for a participant."""
+    if not SKILL_BADGE_ENABLED:
+        return jsonify({'success': False, 'error': 'Skill badge is not enabled'}), 404
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
+
+        participant_id = data.get('participant_id', '').strip()
+        if not participant_id:
+            return jsonify({'success': False, 'error': 'participant_id is required'}), 400
+
+        participant = participants_collection.find_one({'_id': participant_id})
+        if not participant:
+            return jsonify({'success': False, 'error': f'Participant {participant_id} not found'}), 404
+
+        existing = skill_badge_collection.find_one({'_id': participant_id})
+        if existing:
+            if existing.get('status') in ('created', 'active'):
+                return jsonify({
+                    'success': True,
+                    'launch_url': existing['launch_url'],
+                    'delivery_id': existing['delivery_id'],
+                    'status': existing['status'],
+                    'message': 'Existing delivery returned'
+                }), 200
+
+            if existing.get('bonus_awarded'):
+                return jsonify({'success': False, 'error': 'Badge already earned'}), 409
+
+            attempt_number = existing.get('attempt_number', 1)
+            if existing.get('status') in ('scored', 'completed') and not existing.get('passed', False):
+                if attempt_number >= SKILL_BADGE_MAX_ATTEMPTS:
+                    return jsonify({'success': False, 'error': 'No retries remaining'}), 409
+                attempt_number += 1
+            else:
+                attempt_number = existing.get('attempt_number', 1)
+        else:
+            attempt_number = 1
+
+        user_details = user_details_collection.find_one({'_id': participant_id})
+        name = participant.get('name', participant_id)
+        name_parts = name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+        email = user_details.get('email', '') if user_details else ''
+
+        scorpion_payload = {
+            'examinee_info': {
+                'firstName': first_name,
+                'lastName': last_name,
+                'email': email
+            },
+            'meta': {
+                'badgeTemplateId': CREDLY_BADGE_TEMPLATE_ID,
+                'callingEnvironment': 'production'
+            }
+        }
+
+        scorpion_url = f"{SCORPION_BASE_URL}/api/exams/{SCORPION_EXAM_ID}/deliveries"
+        scorpion_response = http_requests.post(
+            scorpion_url,
+            json=scorpion_payload,
+            headers={
+                'Authorization': f'Bearer {SCORPION_API_TOKEN}',
+                'Content-Type': 'application/json'
+            },
+            timeout=30
+        )
+
+        if not scorpion_response.ok:
+            logger.error(f"Scorpion API error: {scorpion_response.status_code} {scorpion_response.text[:300]}")
+            return jsonify({
+                'success': False,
+                'error': f'Scorpion API returned {scorpion_response.status_code}'
+            }), 502
+
+        scorpion_data = scorpion_response.json()
+        delivery_id = scorpion_data.get('delivery_id', '')
+        launch_token = scorpion_data.get('launch_token', '')
+        launch_url = f"{SCORPION_BASE_URL}/take?launch_token={launch_token}"
+
+        delivery_doc = {
+            '_id': participant_id,
+            'delivery_id': delivery_id,
+            'examinee_id': scorpion_data.get('examinee_id', ''),
+            'launch_token': launch_token,
+            'launch_url': launch_url,
+            'status': 'created',
+            'attempt_number': attempt_number,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'bonus_awarded': False,
+            'passed': False,
+        }
+
+        skill_badge_collection.replace_one(
+            {'_id': participant_id},
+            delivery_doc,
+            upsert=True
+        )
+
+        logger.info(f"Created Scorpion delivery {delivery_id} for {participant_id} (attempt {attempt_number})")
+        return jsonify({
+            'success': True,
+            'launch_url': launch_url,
+            'delivery_id': delivery_id,
+            'attempt_number': attempt_number
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error starting skill badge: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/skill-badge/status/<participant_id>', methods=['GET'])
+def get_skill_badge_status(participant_id):
+    """Check delivery status by polling Scorpion."""
+    if not SKILL_BADGE_ENABLED:
+        return jsonify({'enabled': False, 'status': 'not_enabled'}), 200
+
+    try:
+        delivery = skill_badge_collection.find_one({'_id': participant_id})
+        if not delivery:
+            return jsonify({
+                'status': 'not_started',
+                'bonus_awarded': False,
+                'max_attempts': SKILL_BADGE_MAX_ATTEMPTS,
+                'attempt_number': 0
+            }), 200
+
+        if delivery.get('bonus_awarded'):
+            credly_info = delivery.get('credly')
+            if not credly_info:
+                participant_email = ''
+                ud = user_details_collection.find_one({'_id': participant_id})
+                if ud:
+                    participant_email = ud.get('email', '')
+                credly_info = _lookup_credly_badge(participant_email)
+                if credly_info:
+                    skill_badge_collection.update_one({'_id': participant_id}, {'$set': {'credly': credly_info}})
+
+            return jsonify({
+                'status': 'scored',
+                'passed': True,
+                'score': delivery.get('score'),
+                'points_earned': delivery.get('points_earned'),
+                'points_available': delivery.get('points_available'),
+                'used_seconds': delivery.get('used_seconds'),
+                'bonus_awarded': True,
+                'attempt_number': delivery.get('attempt_number', 1),
+                'max_attempts': SKILL_BADGE_MAX_ATTEMPTS,
+                'credly': credly_info,
+            }), 200
+
+        delivery_id = delivery.get('delivery_id')
+        if not delivery_id:
+            return jsonify({'status': delivery.get('status', 'unknown'), 'bonus_awarded': False}), 200
+
+        scorpion_url = f"{SCORPION_BASE_URL}/api/exams/{SCORPION_EXAM_ID}/deliveries/{delivery_id}"
+        scorpion_response = http_requests.get(
+            scorpion_url,
+            headers={'Authorization': f'Bearer {SCORPION_API_TOKEN}'},
+            timeout=30
+        )
+
+        if not scorpion_response.ok:
+            logger.error(f"Scorpion status check error: {scorpion_response.status_code}")
+            return jsonify({
+                'status': delivery.get('status', 'unknown'),
+                'bonus_awarded': False,
+                'error': 'Failed to check Scorpion status'
+            }), 200
+
+        scorpion_data = scorpion_response.json()
+        new_status = scorpion_data.get('status', delivery.get('status'))
+        passed = scorpion_data.get('passed', False)
+        score = scorpion_data.get('score')
+        points_earned = scorpion_data.get('points_earned')
+        points_available = scorpion_data.get('points_available')
+        used_seconds = scorpion_data.get('used_seconds')
+
+        update_fields = {
+            'status': new_status,
+            'passed': passed,
+            'score': score,
+            'points_earned': points_earned,
+            'points_available': points_available,
+            'used_seconds': used_seconds,
+        }
+
+        bonus_awarded = False
+        if passed and not delivery.get('bonus_awarded'):
+            result = skill_badge_collection.find_one_and_update(
+                {'_id': participant_id, 'bonus_awarded': {'$ne': True}},
+                {'$set': {**update_fields, 'bonus_awarded': True, 'passed_at': datetime.now(timezone.utc).isoformat()}}
+            )
+            if result is not None:
+                results_collection_shared.insert_one({
+                    'name': SKILL_BADGE_BONUS_NAME,
+                    'username': participant_id,
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'points': SKILL_BADGE_BONUS_POINTS,
+                })
+                bonus_awarded = True
+                logger.info(f"Awarded skill badge bonus ({SKILL_BADGE_BONUS_POINTS} pts) to {participant_id}")
+        else:
+            skill_badge_collection.update_one(
+                {'_id': participant_id},
+                {'$set': update_fields}
+            )
+            bonus_awarded = delivery.get('bonus_awarded', False)
+
+        credly_info = None
+        if bonus_awarded:
+            participant_email = ''
+            ud = user_details_collection.find_one({'_id': participant_id})
+            if ud:
+                participant_email = ud.get('email', '')
+            credly_info = _lookup_credly_badge(participant_email)
+            if credly_info:
+                skill_badge_collection.update_one({'_id': participant_id}, {'$set': {'credly': credly_info}})
+
+        return jsonify({
+            'status': new_status,
+            'passed': passed,
+            'score': score,
+            'points_earned': points_earned,
+            'points_available': points_available,
+            'used_seconds': used_seconds,
+            'bonus_awarded': bonus_awarded,
+            'attempt_number': delivery.get('attempt_number', 1),
+            'max_attempts': SKILL_BADGE_MAX_ATTEMPTS,
+            'credly': credly_info,
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error checking skill badge status: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/skill-badge/statuses', methods=['GET'])
+def get_all_skill_badge_statuses():
+    """Return badge status for all participants (bulk endpoint for the frontend)."""
+    if not SKILL_BADGE_ENABLED:
+        return jsonify({'enabled': False, 'statuses': {}}), 200
+
+    try:
+        deliveries = list(skill_badge_collection.find({}))
+        statuses = {}
+        for d in deliveries:
+            statuses[d['_id']] = {
+                'status': d.get('status', 'unknown'),
+                'passed': d.get('passed', False),
+                'bonus_awarded': d.get('bonus_awarded', False),
+                'attempt_number': d.get('attempt_number', 1),
+                'score': d.get('score'),
+            }
+        return jsonify({'enabled': True, 'statuses': statuses}), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching skill badge statuses: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV') == 'development'
-    
+
     logger.info(f"Starting Flask application on port {port}")
     logger.info(f"MongoDB URI: {MONGODB_URI}")
     logger.info(f"Database: {DB_NAME}")
     logger.info(f"Collection: {PARTICIPANTS_COLLECTION}")
-    
+    if SKILL_BADGE_ENABLED:
+        logger.info(f"Skill Badge: enabled (exam={SCORPION_EXAM_ID}, bonus={SKILL_BADGE_BONUS_POINTS}pts, max_attempts={SKILL_BADGE_MAX_ATTEMPTS})")
+
     app.run(host='0.0.0.0', port=port, debug=debug)

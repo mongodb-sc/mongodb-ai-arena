@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 
+const skillBadgeEnabled = process.env.NEXT_PUBLIC_SKILL_BADGE_ENABLED === 'true'
+const skillBadgeBonusPoints = parseInt(process.env.NEXT_PUBLIC_SKILL_BADGE_BONUS_POINTS || '50')
+
 // Helper function to convert milliseconds to hours and minutes format
 const formatTime = (milliseconds: number): string => {
   if (milliseconds === 0) return '0m';
@@ -64,6 +67,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
   const [userResults, setUserResults] = useState<any>(null)
   const [userResultsLoading, setUserResultsLoading] = useState(false)
   const [userResultsError, setUserResultsError] = useState('')
+
+  // Badge statuses for leaderboard column
+  const [badgeStatuses, setBadgeStatuses] = useState<Record<string, { passed?: boolean; bonus_awarded?: boolean }>>({})
+
+  const fetchBadgeStatuses = async () => {
+    if (!skillBadgeEnabled) return
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const res = await fetch(`${apiUrl}/api/skill-badge/statuses`)
+      const data = await res.json()
+      if (data.statuses) setBadgeStatuses(data.statuses)
+    } catch (err) {
+      console.error('Error fetching badge statuses:', err)
+    }
+  }
 
   // Read prizes configuration from environment variables
   const prizesEnabled = process.env.NEXT_PUBLIC_PRIZES_ENABLED === 'true'
@@ -148,6 +166,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
 
   useEffect(() => {
     fetchResults()
+    fetchBadgeStatuses()
   }, [refreshTrigger])
 
   // Filter and paginate results
@@ -578,6 +597,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                       Points
                     </th>
                   )}
+                  {skillBadgeEnabled && (
+                    <th className="px-4 py-3 text-center text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                      Skill Badge
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-arena-teal/50">
@@ -610,20 +634,52 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                           {row.user}
                         </button>
                       </td>
-                      {leaderboardType === 'timed' ? (
-                        <>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right">
-                            {row.count || 0}
+                      {(() => {
+                        const badge = badgeStatuses[row._id]
+                        const earned = badge?.bonus_awarded === true
+                        const lastColClass = (!skillBadgeEnabled && actualRank <= 3) ? 'rounded-r-xl' : ''
+                        const badgeColClass = (skillBadgeEnabled && actualRank <= 3) ? 'rounded-r-xl' : ''
+
+                        return leaderboardType === 'timed' ? (
+                          <>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right">
+                              {row.count || 0}
+                              {skillBadgeEnabled && earned && (
+                                <span className="inline-block text-[0.65rem] font-bold text-arena-neon-green bg-arena-neon-green/10 rounded px-1 ml-1">+1</span>
+                              )}
+                            </td>
+                            <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${lastColClass}`}>
+                              {formatTime(row.delta || 0)}
+                            </td>
+                          </>
+                        ) : (
+                          <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${lastColClass}`}>
+                            {row.points || 0}
+                            {skillBadgeEnabled && earned && (
+                              <span className="inline-block text-[0.65rem] font-bold text-arena-neon-green bg-arena-neon-green/10 rounded px-1 ml-1">+{skillBadgeBonusPoints}</span>
+                            )}
                           </td>
-                          <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${actualRank <= 3 ? 'rounded-r-xl' : ''}`}>
-                            {formatTime(row.delta || 0)}
+                        )
+                      })()}
+                      {skillBadgeEnabled && (() => {
+                        const badge = badgeStatuses[row._id]
+                        const earned = badge?.bonus_awarded === true
+                        const badgeColClass = actualRank <= 3 ? 'rounded-r-xl' : ''
+                        return (
+                          <td className={`px-4 py-2 whitespace-nowrap text-sm text-center ${badgeColClass}`}>
+                            {earned ? (
+                              <span className="inline-flex items-center gap-1.5 bg-arena-neon-green/10 border border-arena-neon-green/30 rounded-full px-2.5 py-0.5 text-xs font-semibold text-arena-neon-green">
+                                <img src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob" alt="" className="w-4 h-4 rounded-sm" />
+                                Earned
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 border border-gray-600 rounded-full px-2.5 py-0.5 text-xs text-gray-500">
+                                &#9711; Not earned
+                              </span>
+                            )}
                           </td>
-                        </>
-                      ) : (
-                        <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${actualRank <= 3 ? 'rounded-r-xl' : ''}`}>
-                          {row.points || 0}
-                        </td>
-                      )}
+                        )
+                      })()}
                     </tr>
                   )
                 })}

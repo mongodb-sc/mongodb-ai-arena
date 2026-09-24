@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import BadgeModal from './BadgeModal'
+
+const skillBadgeEnabled = process.env.NEXT_PUBLIC_SKILL_BADGE_ENABLED === 'true'
 
 interface Participant {
   _id: string
@@ -23,8 +26,10 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10) // Show 10 participants per page by default
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [healthStatuses, setHealthStatuses] = useState<Record<string, HealthStatus>>({})
+  const [badgeStatuses, setBadgeStatuses] = useState<Record<string, { passed?: boolean; bonus_awarded?: boolean; status?: string }>>({})
+  const [badgeModalParticipant, setBadgeModalParticipant] = useState<Participant | null>(null)
 
   // Get base domain for workspace URLs
   const getBaseDomain = () => {
@@ -122,6 +127,25 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
       }))
     }
   }
+
+  // Fetch badge statuses for all participants
+  const fetchBadgeStatuses = async () => {
+    if (!skillBadgeEnabled) return
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const res = await fetch(`${apiUrl}/api/skill-badge/statuses`)
+      const data = await res.json()
+      if (data.statuses) {
+        setBadgeStatuses(data.statuses)
+      }
+    } catch (err) {
+      console.error('Error fetching badge statuses:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchBadgeStatuses()
+  }, [participants.length])
 
   // Filter participants based on search term
   const filteredParticipants = useMemo(() => {
@@ -363,18 +387,41 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
                       >
                         🖥️ Workspace
                       </a>
-                      <a 
-                        href={workspaceUrls.app} 
-                        target="_blank" 
+                      <a
+                        href={workspaceUrls.app}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                          participant.decommissioned 
-                            ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' 
+                          participant.decommissioned
+                            ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                             : 'bg-blue-900/40 text-blue-300 border border-blue-400/50 hover:bg-blue-400 hover:text-arena-dark'
                         }`}
                       >
                         📱 App
                       </a>
+                      {skillBadgeEnabled && !participant.decommissioned && (() => {
+                        const badge = badgeStatuses[participant._id]
+                        const earned = badge?.bonus_awarded === true
+                        return (
+                          <button
+                            onClick={() => setBadgeModalParticipant(participant)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                              earned
+                                ? 'bg-arena-neon-green/12 text-arena-neon-green border border-arena-neon-green/40 hover:bg-arena-neon-green hover:text-arena-dark'
+                                : 'bg-amber-500/12 text-amber-400 border border-amber-500/40 hover:bg-amber-500 hover:text-arena-dark'
+                            }`}
+                          >
+                            {earned ? (
+                              <>
+                                <img src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob" alt="" className="w-4 h-4 rounded-sm" />
+                                Badge Earned &#10003;
+                              </>
+                            ) : (
+                              <>&#127941; Skill Badge</>
+                            )}
+                          </button>
+                        )
+                      })()}
                     </div>
                     
                     {participant.insert_timestamp && (
@@ -475,6 +522,18 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
             </select>
           </div>
         </div>
+      )}
+
+      {/* Badge Modal */}
+      {badgeModalParticipant && (
+        <BadgeModal
+          participantId={badgeModalParticipant._id}
+          participantName={badgeModalParticipant.name || badgeModalParticipant._id}
+          onClose={() => {
+            setBadgeModalParticipant(null)
+            fetchBadgeStatuses()
+          }}
+        />
       )}
     </div>
   )

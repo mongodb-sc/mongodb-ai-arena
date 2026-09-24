@@ -50,6 +50,50 @@ resource "helm_release" "portal_server" {
         {
           name  = "LEADERBOARD"
           value = tostring(try(var.scenario_config.leaderboard.type, "timed"))
+        },
+        {
+          name  = "SKILL_BADGE_ENABLED"
+          value = tostring(try(var.scenario_config.skill_badge.enabled, false))
+        },
+        {
+          name  = "SCORPION_API_TOKEN"
+          value = tostring(try(var.scenario_config.skill_badge.scorpion.api_token, ""))
+        },
+        {
+          name  = "SCORPION_EXAM_ID"
+          value = tostring(try(var.scenario_config.skill_badge.scorpion.exam_id, ""))
+        },
+        {
+          name  = "SCORPION_BASE_URL"
+          value = tostring(try(var.scenario_config.skill_badge.scorpion.base_url, "https://scorpion.caveon.com"))
+        },
+        {
+          name  = "CREDLY_API_TOKEN"
+          value = tostring(try(var.scenario_config.skill_badge.credly.api_token, ""))
+        },
+        {
+          name  = "CREDLY_ORG_ID"
+          value = tostring(try(var.scenario_config.skill_badge.credly.org_id, ""))
+        },
+        {
+          name  = "CREDLY_BADGE_TEMPLATE_ID"
+          value = tostring(try(var.scenario_config.skill_badge.credly.badge_template_id, ""))
+        },
+        {
+          name  = "CREDLY_BASE_URL"
+          value = tostring(try(var.scenario_config.skill_badge.credly.base_url, "https://api.credly.com"))
+        },
+        {
+          name  = "SKILL_BADGE_BONUS_NAME"
+          value = tostring(try(var.scenario_config.skill_badge.bonus.exercise_name, "skill-badge"))
+        },
+        {
+          name  = "SKILL_BADGE_BONUS_POINTS"
+          value = tostring(try(var.scenario_config.skill_badge.bonus.points, 50))
+        },
+        {
+          name  = "SKILL_BADGE_MAX_ATTEMPTS"
+          value = tostring(try(var.scenario_config.skill_badge.bonus.max_attempts, 1))
         }
       ],
       volumeMounts = [
@@ -143,6 +187,14 @@ resource "helm_release" "portal_nginx" {
         {
           name  = "NEXT_PUBLIC_PRIZES_WHEN"
           value = tostring(try(var.scenario_config.leaderboard.prizes.when, ""))
+        },
+        {
+          name  = "NEXT_PUBLIC_SKILL_BADGE_ENABLED"
+          value = tostring(try(var.scenario_config.skill_badge.enabled, false))
+        },
+        {
+          name  = "NEXT_PUBLIC_SKILL_BADGE_BONUS_POINTS"
+          value = tostring(try(var.scenario_config.skill_badge.bonus.points, 50))
         }
       ],
       volumeMounts = [

@@ -1135,7 +1135,7 @@ def start_skill_badge():
 
         existing = skill_badge_collection.find_one({'_id': participant_id})
         if existing:
-            if existing.get('status') in ('created', 'active'):
+            if existing.get('status') in ('created', 'active', 'fresh'):
                 return jsonify({
                     'success': True,
                     'launch_url': existing['launch_url'],
@@ -1349,6 +1349,7 @@ def get_skill_badge_status(participant_id):
             'bonus_awarded': bonus_awarded,
             'attempt_number': delivery.get('attempt_number', 1),
             'max_attempts': SKILL_BADGE_MAX_ATTEMPTS,
+            'launch_url': delivery.get('launch_url'),
             'credly': credly_info,
         }), 200
 

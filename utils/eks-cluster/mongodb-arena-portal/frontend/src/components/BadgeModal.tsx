@@ -88,6 +88,8 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
       if (finished) {
         stopPolling()
         setLaunchUrl(null)
+      } else if (data.launch_url && !launchUrl) {
+        setLaunchUrl(data.launch_url)
       }
     } catch (err) {
       console.error('Error fetching badge status:', err)

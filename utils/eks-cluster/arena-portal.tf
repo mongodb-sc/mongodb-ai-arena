@@ -68,6 +68,10 @@ resource "helm_release" "portal_server" {
           value = tostring(try(var.scenario_config.skill_badge.scorpion.base_url, "https://scorpion.caveon.com"))
         },
         {
+          name  = "SCORPION_ASSESSMENT_URL"
+          value = tostring(try(var.scenario_config.skill_badge.scorpion.assessment_url, ""))
+        },
+        {
           name  = "CREDLY_API_TOKEN"
           value = tostring(try(var.scenario_config.skill_badge.credly.api_token, ""))
         },

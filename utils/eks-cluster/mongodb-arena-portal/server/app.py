@@ -47,6 +47,7 @@ SKILL_BADGE_ENABLED = os.getenv('SKILL_BADGE_ENABLED', 'false').lower() == 'true
 SCORPION_API_TOKEN = os.getenv('SCORPION_API_TOKEN', '')
 SCORPION_EXAM_ID = os.getenv('SCORPION_EXAM_ID', '')
 SCORPION_BASE_URL = os.getenv('SCORPION_BASE_URL', 'https://scorpion.caveon.com')
+SCORPION_ASSESSMENT_URL = os.getenv('SCORPION_ASSESSMENT_URL', '')
 CREDLY_API_TOKEN = os.getenv('CREDLY_API_TOKEN', '')
 CREDLY_ORG_ID = os.getenv('CREDLY_ORG_ID', '')
 CREDLY_BADGE_TEMPLATE_ID = os.getenv('CREDLY_BADGE_TEMPLATE_ID', '')
@@ -1127,6 +1128,7 @@ def start_skill_badge():
                 'email': email
             },
             'meta': {
+                'assessmentUrl': SCORPION_ASSESSMENT_URL,
                 'badgeTemplateId': CREDLY_BADGE_TEMPLATE_ID,
                 'callingEnvironment': 'production'
             }

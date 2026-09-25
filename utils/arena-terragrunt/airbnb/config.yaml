@@ -95,6 +95,7 @@ scenario:
   #     api_token: "your-scorpion-jwt-token"
   #     exam_id: "your-exam-uuid"
   #     base_url: "https://scorpion.caveon.com"
+  #     assessment_url: "https://learn.mongodb.com/courses/your-course"
   #   credly:
   #     api_token: "your-credly-api-token"
   #     org_id: "your-credly-org-uuid"

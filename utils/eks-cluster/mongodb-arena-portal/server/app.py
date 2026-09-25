@@ -1135,25 +1135,12 @@ def start_skill_badge():
 
         existing = skill_badge_collection.find_one({'_id': participant_id})
         if existing:
-            if existing.get('status') in ('created', 'active', 'fresh'):
-                return jsonify({
-                    'success': True,
-                    'launch_url': existing['launch_url'],
-                    'delivery_id': existing['delivery_id'],
-                    'status': existing['status'],
-                    'message': 'Existing delivery returned'
-                }), 200
-
             if existing.get('bonus_awarded'):
                 return jsonify({'success': False, 'error': 'Badge already earned'}), 409
 
-            attempt_number = existing.get('attempt_number', 1)
-            if existing.get('status') in ('scored', 'completed', 'complete') and not existing.get('passed', False):
-                if attempt_number >= SKILL_BADGE_MAX_ATTEMPTS:
-                    return jsonify({'success': False, 'error': 'No retries remaining'}), 409
-                attempt_number += 1
-            else:
-                attempt_number = existing.get('attempt_number', 1)
+            attempt_number = existing.get('attempt_number', 0) + 1
+            if attempt_number > SKILL_BADGE_MAX_ATTEMPTS:
+                return jsonify({'success': False, 'error': 'No retries remaining'}), 409
         else:
             attempt_number = 1
 

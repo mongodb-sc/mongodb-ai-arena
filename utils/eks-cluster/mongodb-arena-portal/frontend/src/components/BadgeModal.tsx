@@ -89,8 +89,6 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
       if (finished) {
         stopPolling()
         setLaunchUrl(null)
-      } else if (data.launch_url && !launchUrl && data.status !== 'fresh' && data.status !== 'created' && data.status !== 'not_started') {
-        setLaunchUrl(data.launch_url)
       }
     } catch (err) {
       console.error('Error fetching badge status:', err)
@@ -209,24 +207,12 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
               Exam in progress — polling for results
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            {launchUrl && (
-              <a
-                href={launchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-400 text-xs px-2 py-1 border border-gray-700 rounded hover:border-blue-400 transition-colors"
-              >
-                Open in new tab
-              </a>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-red-400 text-sm font-medium px-3 py-1 border border-gray-600 rounded hover:border-red-400 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-red-400 text-sm font-medium px-3 py-1 border border-gray-600 rounded hover:border-red-400 transition-colors"
+          >
+            Close
+          </button>
         </div>
 
         {/* Scorpion exam iframe */}
@@ -341,17 +327,10 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
           </div>
         )}
 
-        {/* Exam in progress, waiting for iframe to load (brief transition state) */}
-        {isInProgress && !showExamIframe && (
-          <div className="text-center py-4 mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-400 border-t-transparent mx-auto mb-3"></div>
-            <p className="text-white font-medium">Loading exam...</p>
-          </div>
-        )}
 
         {/* Actions */}
         <div className="flex gap-3 justify-center mt-6">
-          {(isNotStarted || canRetry) && (
+          {!isPassed && !showExamIframe && !(isFailed && !canRetry) && (
             <button
               onClick={handleStartExam}
               disabled={starting}
@@ -363,9 +342,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
                   Creating Delivery...
                 </>
               ) : (
-                <>
-                  &#127941; {canRetry ? 'Retry Exam' : 'Start Skill Badge Exam'}
-                </>
+                <>&#127941; Start Skill Badge Exam</>
               )}
             </button>
           )}

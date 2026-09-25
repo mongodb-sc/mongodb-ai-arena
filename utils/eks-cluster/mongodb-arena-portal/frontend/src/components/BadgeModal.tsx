@@ -88,8 +88,6 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
       if (finished) {
         stopPolling()
         setLaunchUrl(null)
-      } else if (data.launch_url && !launchUrl) {
-        setLaunchUrl(data.launch_url)
       }
     } catch (err) {
       console.error('Error fetching badge status:', err)
@@ -325,6 +323,16 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
         {error && (
           <div className="mb-4 p-3 bg-red-900/30 border border-red-500 text-red-300 rounded-lg text-sm">
             {error}
+          </div>
+        )}
+
+        {/* Waiting for exam completion (in-progress, no iframe) */}
+        {isInProgress && !showExamIframe && (
+          <div className="text-center py-4 mb-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-400 border-t-transparent mx-auto mb-3"></div>
+            <p className="text-white font-medium mb-1">Exam in progress</p>
+            <p className="text-gray-400 text-sm">Checking for results every 10 seconds...</p>
+            <p className="text-gray-500 text-xs mt-2">Complete the exam in the Scorpion window, then return here to see your results.</p>
           </div>
         )}
 

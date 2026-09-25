@@ -164,7 +164,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
   const isNotStarted = !status || status.status === 'not_started' || status.status === 'fresh' || status.status === 'created'
   const isInProgress = !isFinished && !status?.bonus_awarded && !isNotStarted && !isFailed
   const canRetry = isFailed && (status?.attempt_number || 1) < (status?.max_attempts || config?.max_attempts || 1)
-  const showExamIframe = launchUrl && isInProgress
+  const showExamIframe = !!launchUrl && !isFinished && !isFailed && !isPassed
 
   const credly = status?.credly
   const credlyState = credly?.state

@@ -42,6 +42,7 @@ interface BadgeStatus {
   bonus_awarded?: boolean
   attempt_number?: number
   max_attempts?: number
+  launch_url?: string
   credly?: CredlyInfo | null
   error?: string
 }
@@ -326,13 +327,24 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
           </div>
         )}
 
-        {/* Waiting for exam completion (in-progress, no iframe) */}
+        {/* Exam in progress but no iframe (reopened modal) */}
         {isInProgress && !showExamIframe && (
           <div className="text-center py-4 mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-400 border-t-transparent mx-auto mb-3"></div>
-            <p className="text-white font-medium mb-1">Exam in progress</p>
-            <p className="text-gray-400 text-sm">Checking for results every 10 seconds...</p>
-            <p className="text-gray-500 text-xs mt-2">Complete the exam in the Scorpion window, then return here to see your results.</p>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-3 border-blue-400 border-t-transparent"></div>
+              <p className="text-white font-medium">Exam in progress — polling for results</p>
+            </div>
+            {status && status.launch_url && (
+              <a
+                href={status.launch_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-arena-dark bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 transition-all mt-2"
+              >
+                &#128221; Resume Exam in New Tab
+              </a>
+            )}
+            <p className="text-gray-500 text-xs mt-3">Results will appear here automatically when the exam is complete.</p>
           </div>
         )}
 

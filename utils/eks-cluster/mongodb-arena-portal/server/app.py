@@ -1287,6 +1287,7 @@ def get_skill_badge_status(participant_id):
             return jsonify({
                 'status': delivery.get('status', 'unknown'),
                 'bonus_awarded': False,
+                'launch_url': delivery.get('launch_url'),
                 'error': 'Failed to check Scorpion status'
             }), 200
 

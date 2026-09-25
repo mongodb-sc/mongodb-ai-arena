@@ -91,7 +91,8 @@ litellm:
   env:
     PORT: "4000"
     LITELLM_LOG: "INFO"
-  
+    LITELLM_DANGEROUSLY_PERMIT_WEAK_OR_UNSET_MASTER_KEY: "true"
+
   # API keys - these should be provided as secrets externally
   secrets:
     anthropicApiKey: ""

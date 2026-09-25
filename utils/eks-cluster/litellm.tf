@@ -35,7 +35,7 @@ resource "helm_release" "litellm" {
   name       = "litellm"
   chart      = "./litellm"
   namespace  = "default"
-  version    = "0.1.16"
+  version    = "0.1.17"
   
   wait          = true
   wait_for_jobs = true
@@ -54,6 +54,7 @@ resource "helm_release" "litellm" {
         env = merge({
           PORT = "4000"
           LITELLM_LOG = "INFO"
+          LITELLM_DANGEROUSLY_PERMIT_WEAK_OR_UNSET_MASTER_KEY = "true"
         }, local.redis_config.enabled ? {
           REDIS_HOST = local.redis_config.service.name
           REDIS_PORT = tostring(local.redis_config.service.port)

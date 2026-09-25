@@ -179,7 +179,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
 
   if (loading) {
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ zIndex: 99999 }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)' }}>
         <div className="bg-arena-dark border-2 border-arena-neon-green rounded-lg shadow-2xl p-6 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-arena-neon-green border-t-transparent mx-auto"></div>
@@ -194,7 +194,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
   // Exam iframe mode — fullscreen modal with embedded Scorpion exam
   if (showExamIframe) {
     return createPortal(
-      <div className="fixed inset-0 z-50 flex flex-col bg-arena-dark" style={{ zIndex: 99999 }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, display: 'flex', flexDirection: 'column', background: '#0b1120' }}>
         {/* Compact header bar */}
         <div className="flex items-center justify-between px-4 py-2 bg-arena-dark-light border-b border-blue-500/50">
           <div className="flex items-center gap-3">

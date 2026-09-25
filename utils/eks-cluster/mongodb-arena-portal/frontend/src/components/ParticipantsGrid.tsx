@@ -29,6 +29,7 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [healthStatuses, setHealthStatuses] = useState<Record<string, HealthStatus>>({})
   const [badgeStatuses, setBadgeStatuses] = useState<Record<string, { passed?: boolean; bonus_awarded?: boolean; status?: string }>>({})
+  const [badgeImageUrl, setBadgeImageUrl] = useState('')
   const [badgeModalParticipant, setBadgeModalParticipant] = useState<Participant | null>(null)
 
   // Get base domain for workspace URLs
@@ -137,6 +138,9 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
       const data = await res.json()
       if (data.statuses) {
         setBadgeStatuses(data.statuses)
+      }
+      if (data.badge_image_url) {
+        setBadgeImageUrl(data.badge_image_url)
       }
     } catch (err) {
       console.error('Error fetching badge statuses:', err)
@@ -413,7 +417,7 @@ export default function ParticipantsGrid({ participants, onRefresh }: {
                           >
                             {earned ? (
                               <>
-                                <img src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob" alt="" className="w-4 h-4 rounded-sm" />
+                                {badgeImageUrl && <img src={badgeImageUrl} alt="" className="w-4 h-4 rounded-sm" />}
                                 Badge Earned &#10003;
                               </>
                             ) : (

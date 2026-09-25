@@ -1065,7 +1065,7 @@ def _fetch_badge_metadata():
                 'name': data.get('name', ''),
                 'description': data.get('description', ''),
                 'image_url': data.get('image_url', ''),
-                'skills': [s.get('name', '') for s in data.get('skills', [])],
+                'skills': [s if isinstance(s, str) else s.get('name', '') for s in data.get('skills', [])],
                 'url': data.get('url', ''),
             })
             logger.info(f"Fetched Credly badge metadata: {_badge_metadata_cache.get('name')}")
@@ -1375,7 +1375,12 @@ def get_all_skill_badge_statuses():
                 'attempt_number': d.get('attempt_number', 1),
                 'score': d.get('score'),
             }
-        return jsonify({'enabled': True, 'statuses': statuses}), 200
+        badge_meta = _fetch_badge_metadata()
+        return jsonify({
+            'enabled': True,
+            'statuses': statuses,
+            'badge_image_url': badge_meta.get('image_url', '') if badge_meta else '',
+        }), 200
 
     except Exception as e:
         logger.error(f"Error fetching skill badge statuses: {str(e)}")

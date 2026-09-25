@@ -8,6 +8,16 @@ const skillBadgeBonusPoints = process.env.NEXT_PUBLIC_SKILL_BADGE_BONUS_POINTS |
 const ThreeStepsSection: React.FC = () => {
   // State for collapsible steps (default based on screen size)
   const [stepsExpanded, setStepsExpanded] = useState(false)
+  const [badgeImageUrl, setBadgeImageUrl] = useState('')
+
+  useEffect(() => {
+    if (!skillBadgeEnabled) return
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    fetch(`${apiUrl}/api/skill-badge/config`)
+      .then(r => r.json())
+      .then(d => { if (d.badge?.image_url) setBadgeImageUrl(d.badge.image_url) })
+      .catch(() => {})
+  }, [])
 
   const toggleSteps = () => {
     setStepsExpanded(prev => !prev)
@@ -265,7 +275,7 @@ const ThreeStepsSection: React.FC = () => {
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${stepsExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="text-center mb-4">
                 <img
-                  src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob"
+                  src={badgeImageUrl || 'https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob'}
                   alt="Skill Badge"
                   className="w-16 h-16 rounded-lg border-2 border-gray-600 mx-auto mb-2"
                 />

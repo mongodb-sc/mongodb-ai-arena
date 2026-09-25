@@ -70,6 +70,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
 
   // Badge statuses for leaderboard column
   const [badgeStatuses, setBadgeStatuses] = useState<Record<string, { passed?: boolean; bonus_awarded?: boolean }>>({})
+  const [badgeImageUrl, setBadgeImageUrl] = useState('')
 
   const fetchBadgeStatuses = async () => {
     if (!skillBadgeEnabled) return
@@ -78,6 +79,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
       const res = await fetch(`${apiUrl}/api/skill-badge/statuses`)
       const data = await res.json()
       if (data.statuses) setBadgeStatuses(data.statuses)
+      if (data.badge_image_url) setBadgeImageUrl(data.badge_image_url)
     } catch (err) {
       console.error('Error fetching badge statuses:', err)
     }
@@ -717,7 +719,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                           <td className={`px-4 py-2 whitespace-nowrap text-sm text-center ${badgeColClass}`}>
                             {earned ? (
                               <span className="inline-flex items-center gap-1.5 bg-arena-neon-green/10 border border-arena-neon-green/30 rounded-full px-2.5 py-0.5 text-xs font-semibold text-arena-neon-green">
-                                <img src="https://images.credly.com/images/660bba4a-fb7d-4112-b1c6-2904a420ad25/blob" alt="" className="w-4 h-4 rounded-sm" />
+                                {badgeImageUrl && <img src={badgeImageUrl} alt="" className="w-4 h-4 rounded-sm" />}
                                 Earned
                               </span>
                             ) : (

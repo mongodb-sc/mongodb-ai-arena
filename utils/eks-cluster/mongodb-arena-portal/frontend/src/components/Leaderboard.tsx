@@ -588,14 +588,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                       <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
                         Exercises
                       </th>
+                      {skillBadgeEnabled && (
+                        <>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                            Boost
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                            Total
+                          </th>
+                        </>
+                      )}
                       <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
                         Time
                       </th>
                     </>
                   ) : (
-                    <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
-                      Points
-                    </th>
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                        Points
+                      </th>
+                      {skillBadgeEnabled && (
+                        <>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                            Boost
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-arena-neon-green uppercase tracking-wider">
+                            Total
+                          </th>
+                        </>
+                      )}
+                    </>
                   )}
                   {skillBadgeEnabled && (
                     <th className="px-4 py-3 text-center text-xs font-medium text-arena-neon-green uppercase tracking-wider">
@@ -638,27 +660,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                         const badge = badgeStatuses[row._id]
                         const earned = badge?.bonus_awarded === true
                         const lastColClass = (!skillBadgeEnabled && actualRank <= 3) ? 'rounded-r-xl' : ''
-                        const badgeColClass = (skillBadgeEnabled && actualRank <= 3) ? 'rounded-r-xl' : ''
 
                         return leaderboardType === 'timed' ? (
                           <>
                             <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right">
-                              {row.count || 0}
-                              {skillBadgeEnabled && earned && (
-                                <span className="inline-block text-[0.65rem] font-bold text-arena-neon-green bg-arena-neon-green/10 rounded px-1 ml-1">+1</span>
-                              )}
+                              {skillBadgeEnabled && earned ? (row.count || 0) - 1 : (row.count || 0)}
                             </td>
+                            {skillBadgeEnabled && (
+                              <>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-right">
+                                  {earned ? (
+                                    <span className="text-arena-neon-green font-semibold">+1</span>
+                                  ) : (
+                                    <span className="text-gray-500">—</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right font-semibold">
+                                  {row.count || 0}
+                                </td>
+                              </>
+                            )}
                             <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${lastColClass}`}>
                               {formatTime(row.delta || 0)}
                             </td>
                           </>
                         ) : (
-                          <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${lastColClass}`}>
-                            {row.points || 0}
-                            {skillBadgeEnabled && earned && (
-                              <span className="inline-block text-[0.65rem] font-bold text-arena-neon-green bg-arena-neon-green/10 rounded px-1 ml-1">+{skillBadgeBonusPoints}</span>
+                          <>
+                            <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right ${!skillBadgeEnabled ? lastColClass : ''}`}>
+                              {skillBadgeEnabled && earned ? (row.points || 0) - skillBadgeBonusPoints : (row.points || 0)}
+                            </td>
+                            {skillBadgeEnabled && (
+                              <>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-right">
+                                  {earned ? (
+                                    <span className="text-arena-neon-green font-semibold">+{skillBadgeBonusPoints}</span>
+                                  ) : (
+                                    <span className="text-gray-500">—</span>
+                                  )}
+                                </td>
+                                <td className={`px-4 py-2 whitespace-nowrap text-sm text-white text-right font-semibold ${lastColClass}`}>
+                                  {row.points || 0}
+                                </td>
+                              </>
                             )}
-                          </td>
+                          </>
                         )
                       })()}
                       {skillBadgeEnabled && (() => {

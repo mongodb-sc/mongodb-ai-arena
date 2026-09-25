@@ -1139,7 +1139,7 @@ def start_skill_badge():
             scorpion_url,
             json=scorpion_payload,
             headers={
-                'Authorization': f'Bearer {SCORPION_API_TOKEN}',
+                'Authorization': SCORPION_API_TOKEN,
                 'Content-Type': 'application/json'
             },
             timeout=30
@@ -1235,7 +1235,7 @@ def get_skill_badge_status(participant_id):
         scorpion_url = f"{SCORPION_BASE_URL}/api/exams/{SCORPION_EXAM_ID}/deliveries/{delivery_id}"
         scorpion_response = http_requests.get(
             scorpion_url,
-            headers={'Authorization': f'Bearer {SCORPION_API_TOKEN}'},
+            headers={'Authorization': SCORPION_API_TOKEN},
             timeout=30
         )
 

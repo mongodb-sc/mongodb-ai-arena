@@ -92,7 +92,7 @@ scenario:
   # skill_badge:
   #   enabled: true
   #   scorpion:
-  #     api_token: "your-scorpion-jwt-token"
+  #     api_token: "Basic <base64-encoded-credentials>"
   #     exam_id: "your-exam-uuid"
   #     base_url: "https://scorpion.caveon.com"
   #     assessment_url: "https://learn.mongodb.com/courses/your-course"

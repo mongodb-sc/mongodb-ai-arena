@@ -209,12 +209,24 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
               Exam in progress — polling for results
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-red-400 text-sm font-medium px-3 py-1 border border-gray-600 rounded hover:border-red-400 transition-colors"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            {launchUrl && (
+              <a
+                href={launchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 text-xs px-2 py-1 border border-gray-700 rounded hover:border-blue-400 transition-colors"
+              >
+                Open in new tab
+              </a>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-red-400 text-sm font-medium px-3 py-1 border border-gray-600 rounded hover:border-red-400 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         {/* Scorpion exam iframe */}

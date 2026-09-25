@@ -661,22 +661,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ refreshTrigger = 0, closeDate
                         const earned = badge?.bonus_awarded === true
                         const lastColClass = (!skillBadgeEnabled && actualRank <= 3) ? 'rounded-r-xl' : ''
 
+                        const rawCount = row.count || 0
+                        const exercises = earned ? rawCount - 1 : rawCount
+
                         return leaderboardType === 'timed' ? (
                           <>
                             <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right">
-                              {skillBadgeEnabled && earned ? (row.count || 0) - 1 : (row.count || 0)}
+                              {exercises}
                             </td>
                             {skillBadgeEnabled && (
                               <>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm text-right">
                                   {earned ? (
-                                    <span className="text-arena-neon-green font-semibold">+1</span>
+                                    <span className="text-arena-neon-green font-semibold">+{skillBadgeBonusPoints}</span>
                                   ) : (
                                     <span className="text-gray-500">—</span>
                                   )}
                                 </td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm text-white text-right font-semibold">
-                                  {row.count || 0}
+                                  {exercises + (earned ? skillBadgeBonusPoints : 0)}
                                 </td>
                               </>
                             )}

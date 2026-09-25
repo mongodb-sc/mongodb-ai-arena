@@ -84,11 +84,8 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
       const data = await res.json()
       setStatus(data)
 
-      if (data.status === 'scored' || data.status === 'completed' || data.bonus_awarded) {
-        stopPolling()
-        setLaunchUrl(null)
-      }
-      if (data.status === 'scored' && !data.passed) {
+      const finished = data.status === 'scored' || data.status === 'completed' || data.status === 'complete' || data.bonus_awarded
+      if (finished) {
         stopPolling()
         setLaunchUrl(null)
       }
@@ -162,8 +159,9 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
   const badgeSkills = badgeMeta?.skills?.length ? badgeMeta.skills : FALLBACK_SKILLS
 
   const isPassed = status?.passed === true
-  const isFailed = status?.status === 'scored' && status?.passed === false
-  const isInProgress = status?.status === 'active' || status?.status === 'created'
+  const isFinished = status?.status === 'scored' || status?.status === 'completed' || status?.status === 'complete'
+  const isFailed = isFinished && status?.passed === false
+  const isInProgress = status?.status === 'active' || status?.status === 'created' || status?.status === 'submitted'
   const isNotStarted = !status || status.status === 'not_started'
   const canRetry = isFailed && (status?.attempt_number || 1) < (status?.max_attempts || config?.max_attempts || 1)
   const showExamIframe = launchUrl && isInProgress
@@ -230,7 +228,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
 
   // Standard modal — before exam, results, or retry
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" onClick={onClose} style={{ zIndex: 99999 }}>
+    <div onClick={onClose} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)' }}>
       <div
         className={`bg-arena-dark border-2 ${borderColor} rounded-lg shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto`}
         onClick={e => e.stopPropagation()}

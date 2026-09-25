@@ -227,22 +227,24 @@ export default function DisplayLeaderboard() {
                     const count = 'count' in row ? (row.count as number) : 0
                     const points = 'points' in row ? (row.points as number) : 0
 
+                    const exercises = earned ? count - 1 : count
+
                     return leaderboardType === 'timed' ? (
                       <>
                         <td className="px-6 py-4 text-right font-mono text-white">
-                          {earned ? count - 1 : count}
+                          {exercises}
                         </td>
                         {skillBadgeEnabled && (
                           <>
                             <td className="px-6 py-4 text-right font-mono">
                               {earned ? (
-                                <span className="text-arena-neon-green font-semibold">+1</span>
+                                <span className="text-arena-neon-green font-semibold">+{skillBadgeBonusPoints}</span>
                               ) : (
                                 <span className="text-gray-500">—</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-right font-mono text-white font-semibold">
-                              {count}
+                              {exercises + (earned ? skillBadgeBonusPoints : 0)}
                             </td>
                           </>
                         )}

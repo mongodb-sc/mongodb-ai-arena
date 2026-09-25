@@ -380,8 +380,12 @@ def get_results():
                             'firstTimestamp': datetime.now(timezone.utc),
                             'lastTimestamp': datetime.now(timezone.utc),
                         })
-                # Re-sort: most exercises descending, then shortest time ascending
-                data.sort(key=lambda x: (-x.get('count', 0), x.get('delta', 0)))
+                # Re-sort by total score (exercises + bonus for earners), then shortest time
+                def timed_sort_key(x):
+                    count = x.get('count', 0)
+                    total = count + SKILL_BADGE_BONUS_POINTS if x.get('_id') in badge_earners else count
+                    return (-total, x.get('delta', 0))
+                data.sort(key=timed_sort_key)
 
             if format_type == 'csv':
                 # Return CSV format
@@ -1144,7 +1148,7 @@ def start_skill_badge():
                 return jsonify({'success': False, 'error': 'Badge already earned'}), 409
 
             attempt_number = existing.get('attempt_number', 1)
-            if existing.get('status') in ('scored', 'completed') and not existing.get('passed', False):
+            if existing.get('status') in ('scored', 'completed', 'complete') and not existing.get('passed', False):
                 if attempt_number >= SKILL_BADGE_MAX_ATTEMPTS:
                     return jsonify({'success': False, 'error': 'No retries remaining'}), 409
                 attempt_number += 1

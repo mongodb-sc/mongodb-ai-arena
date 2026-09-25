@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 interface BadgeModalProps {
   participantId: string
@@ -62,6 +63,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState('')
+  const [launchUrl, setLaunchUrl] = useState<string | null>(null)
   const pollRef = useRef<NodeJS.Timeout | null>(null)
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -84,9 +86,11 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
 
       if (data.status === 'scored' || data.status === 'completed' || data.bonus_awarded) {
         stopPolling()
+        setLaunchUrl(null)
       }
       if (data.status === 'scored' && !data.passed) {
         stopPolling()
+        setLaunchUrl(null)
       }
     } catch (err) {
       console.error('Error fetching badge status:', err)
@@ -140,7 +144,7 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
         return
       }
 
-      window.open(data.launch_url, '_blank')
+      setLaunchUrl(data.launch_url)
       await fetchStatus()
       startPolling()
     } catch (err) {
@@ -162,29 +166,71 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
   const isInProgress = status?.status === 'active' || status?.status === 'created'
   const isNotStarted = !status || status.status === 'not_started'
   const canRetry = isFailed && (status?.attempt_number || 1) < (status?.max_attempts || config?.max_attempts || 1)
+  const showExamIframe = launchUrl && isInProgress
 
   const credly = status?.credly
   const credlyState = credly?.state
   const credlyClaimUrl = credly?.accept_badge_url
   const credlyBadgeUrl = credly?.badge_url
 
-  const borderColor = isPassed ? 'border-arena-neon-green' : 'border-amber-500'
+  const borderColor = isPassed ? 'border-arena-neon-green' : showExamIframe ? 'border-blue-500' : 'border-amber-500'
+
+  if (typeof document === 'undefined') return null
 
   if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" onClick={onClose}>
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ zIndex: 99999 }}>
         <div className="bg-arena-dark border-2 border-arena-neon-green rounded-lg shadow-2xl p-6 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-arena-neon-green border-t-transparent mx-auto"></div>
             <p className="text-gray-300 mt-4">Loading badge info...</p>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" onClick={onClose}>
+  // Exam iframe mode — fullscreen modal with embedded Scorpion exam
+  if (showExamIframe) {
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex flex-col bg-arena-dark" style={{ zIndex: 99999 }}>
+        {/* Compact header bar */}
+        <div className="flex items-center justify-between px-4 py-2 bg-arena-dark-light border-b border-blue-500/50">
+          <div className="flex items-center gap-3">
+            <img src={badgeImage} alt={badgeName} className="w-8 h-8 rounded" />
+            <div>
+              <span className="text-white font-semibold text-sm">{badgeName}</span>
+              <span className="text-gray-400 text-xs ml-2">— {participantName}</span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-400 border-t-transparent"></div>
+              Exam in progress — polling for results
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-red-400 text-sm font-medium px-3 py-1 border border-gray-600 rounded hover:border-red-400 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+
+        {/* Scorpion exam iframe */}
+        <iframe
+          src={launchUrl}
+          className="flex-1 w-full border-0"
+          allow="camera; microphone"
+          title="Skill Badge Exam"
+        />
+      </div>,
+      document.body
+    )
+  }
+
+  // Standard modal — before exam, results, or retry
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" onClick={onClose} style={{ zIndex: 99999 }}>
       <div
         className={`bg-arena-dark border-2 ${borderColor} rounded-lg shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto`}
         onClick={e => e.stopPropagation()}
@@ -209,11 +255,6 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
               {(isNotStarted || canRetry) && (
                 <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-lg text-sm font-bold bg-amber-500/12 text-amber-400 border border-amber-500/30">
                   &#128640; Available to Earn &middot; +{bonusPoints} Bonus Points
-                </span>
-              )}
-              {isInProgress && (
-                <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-lg text-sm font-bold bg-blue-500/12 text-blue-400 border border-blue-500/30">
-                  &#9203; Exam In Progress
                 </span>
               )}
               {isFailed && !canRetry && (
@@ -287,25 +328,6 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
           </div>
         )}
 
-        {/* In-progress polling indicator */}
-        {isInProgress && (
-          <div className="text-center py-4 mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-400 border-t-transparent mx-auto mb-3"></div>
-            <p className="text-gray-300 text-sm">Waiting for exam completion... checking every 10 seconds</p>
-            <button
-              onClick={() => {
-                const delivery = status as any
-                if (delivery?.launch_url) {
-                  window.open(delivery.launch_url, '_blank')
-                }
-              }}
-              className="mt-3 inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 border border-blue-400/50 rounded-md hover:bg-blue-400/10 transition-colors"
-            >
-              Re-open Exam Tab
-            </button>
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex gap-3 justify-center mt-6">
           {(isNotStarted || canRetry) && (
@@ -371,7 +393,8 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

@@ -290,7 +290,15 @@ def get_results():
         # For score leaderboard, exclude _id (not needed for aggregation)
         projection = {'_id': 0} if leaderboard == 'score' else {}
         data = list(leaderboard_collection.find({}, projection))
-        
+
+        # Look up skill badge earners for bonus point injection
+        badge_earners = set()
+        if SKILL_BADGE_ENABLED:
+            try:
+                for d in skill_badge_collection.find({'bonus_awarded': True}, {'_id': 1}):
+                    badge_earners.add(d['_id'])
+            except Exception as e:
+                logger.warning(f"[getResults] Could not fetch badge earners: {e}")
 
         if leaderboard == 'score':
             # Aggregate points by username for score leaderboard
@@ -300,12 +308,24 @@ def get_results():
                 for user in users:
                     display_name = user.get('user') or user.get('username')
                     points = user.get('points', 0)
-                    
+
                     if display_name in points_by_username:
                         points_by_username[display_name] += points
                     else:
                         points_by_username[display_name] = points
-            
+
+            # Apply skill badge bonus to earners
+            # The view keys by display name, so resolve participant_id -> display name
+            for username in badge_earners:
+                participant = participants_collection.find_one({'_id': username}, {'name': 1})
+                display_name = participant.get('name', username) if participant else username
+                if display_name in points_by_username:
+                    points_by_username[display_name] += SKILL_BADGE_BONUS_POINTS
+                elif username in points_by_username:
+                    points_by_username[username] += SKILL_BADGE_BONUS_POINTS
+                else:
+                    points_by_username[display_name] = SKILL_BADGE_BONUS_POINTS
+
             # Convert to sorted array (sorted by points descending)
             sorted_points_array = sorted(points_by_username.items(), key=lambda x: x[1], reverse=True)
             
@@ -343,7 +363,26 @@ def get_results():
                     'leaderboardType': 'score'
                 }
         else:
-            # For timed leaderboard
+            # For timed leaderboard — badge earners already get +1 exercise count
+            # from the skill-badge result document in the view. But ensure participants
+            # who ONLY have the badge (no exercises yet) still appear on the board.
+            if SKILL_BADGE_ENABLED and badge_earners:
+                existing_users = {item.get('_id') for item in data}
+                for username in badge_earners:
+                    if username not in existing_users:
+                        participant = participants_collection.find_one({'_id': username}, {'name': 1})
+                        display_name = participant.get('name', username) if participant else username
+                        data.append({
+                            '_id': username,
+                            'name': display_name,
+                            'count': 1,
+                            'delta': 0,
+                            'firstTimestamp': datetime.now(timezone.utc),
+                            'lastTimestamp': datetime.now(timezone.utc),
+                        })
+                # Re-sort: most exercises descending, then shortest time ascending
+                data.sort(key=lambda x: (-x.get('count', 0), x.get('delta', 0)))
+
             if format_type == 'csv':
                 # Return CSV format
                 output = StringIO()
@@ -1274,7 +1313,7 @@ def get_skill_badge_status(participant_id):
                 results_collection_shared.insert_one({
                     'name': SKILL_BADGE_BONUS_NAME,
                     'username': participant_id,
-                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'timestamp': datetime.now(timezone.utc),
                     'points': SKILL_BADGE_BONUS_POINTS,
                 })
                 bonus_awarded = True

@@ -118,13 +118,6 @@ const BadgeModal: React.FC<BadgeModalProps> = ({ participantId, participantName,
     return () => stopPolling()
   }, [participantId])
 
-  useEffect(() => {
-    if (status && !isNotStarted && !isFinished && !status.bonus_awarded) {
-      startPolling()
-    }
-    return () => stopPolling()
-  }, [status?.status])
-
   const handleStartExam = async () => {
     setStarting(true)
     setError('')
